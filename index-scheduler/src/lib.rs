@@ -733,12 +733,12 @@ mod tests {
     #[test]
     fn register() {
         // In this test, the handle doesn't make any progress, we only check that the tasks are registered
-        let (index_scheduler, _handle) = IndexScheduler::test(true);
+        let (index_scheduler, handle) = IndexScheduler::test(true);
 
         let kinds = [
             index_creation_task("catto", "mouse"),
             replace_document_import_task("catto", None, 0, 12),
-            KindWithContent::CancelTask { tasks: vec![0, 1] },
+            // KindWithContent::CancelTask { tasks: vec![0, 1] },
             replace_document_import_task("catto", None, 1, 50),
             replace_document_import_task("doggo", Some("bone"), 2, 5000),
         ];
@@ -752,16 +752,21 @@ mod tests {
         }
 
         snapshot!(snapshot_index_scheduler(&index_scheduler));
+        handle.dont_block();
     }
 
     #[test]
     fn insert_task_while_another_task_is_processing() {
         let (index_scheduler, handle) = IndexScheduler::test(true);
 
-        index_scheduler.register(KindWithContent::Snapshot).unwrap();
+        index_scheduler
+            .register(index_creation_task("a", "id"))
+            .unwrap();
         handle.wait_till(Breakpoint::BatchCreated);
         // while the task is processing can we register another task?
-        index_scheduler.register(KindWithContent::Snapshot).unwrap();
+        index_scheduler
+            .register(index_creation_task("a", "id"))
+            .unwrap();
         index_scheduler
             .register(KindWithContent::IndexDeletion {
                 index_uid: S("doggos"),
@@ -806,6 +811,7 @@ mod tests {
         assert_eq!(tasks[0].status, Status::Succeeded);
         assert_eq!(tasks[1].status, Status::Succeeded);
         assert_eq!(tasks[2].status, Status::Succeeded);
+        handle.dont_block();
     }
 
     #[test]
@@ -846,6 +852,7 @@ mod tests {
         assert_eq!(tasks[1].status, Status::Succeeded);
         assert_eq!(tasks[2].status, Status::Succeeded);
         assert_eq!(tasks[3].status, Status::Succeeded);
+        handle.dont_block();
     }
 
     #[test]
@@ -888,6 +895,7 @@ mod tests {
         // the "task deletion" task should be marked as "succeeded" and, in its details, the
         // number of deleted tasks should be 0
         snapshot!(snapshot_index_scheduler(&index_scheduler), name: "task_deletion_done");
+        handle.dont_block();
     }
 
     #[test]
@@ -924,6 +932,7 @@ mod tests {
 
         handle.wait_till(Breakpoint::AfterProcessing);
         snapshot!(snapshot_index_scheduler(&index_scheduler), name: "task_deletion_processed");
+        handle.dont_block();
     }
 
     #[test]
@@ -963,6 +972,7 @@ mod tests {
             handle.wait_till(Breakpoint::AfterProcessing);
         }
         snapshot!(snapshot_index_scheduler(&index_scheduler), name: "task_deletion_processed");
+        handle.dont_block();
     }
 
     #[test]
@@ -1000,6 +1010,7 @@ mod tests {
         handle.wait_till(Breakpoint::AfterProcessing);
 
         snapshot!(snapshot_index_scheduler(&index_scheduler));
+        handle.dont_block();
     }
 
     #[test]

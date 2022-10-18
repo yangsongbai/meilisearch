@@ -6,18 +6,19 @@ source: index-scheduler/src/lib.rs
 [0,]
 ----------------------------------------------------------------------
 ### All Tasks:
-0 {uid: 0, status: enqueued, kind: Snapshot}
-1 {uid: 1, status: enqueued, kind: Snapshot}
+0 {uid: 0, status: enqueued, details: { primary_key: Some("id") }, kind: IndexCreation { index_uid: "a", primary_key: Some("id") }}
+1 {uid: 1, status: enqueued, details: { primary_key: Some("id") }, kind: IndexCreation { index_uid: "a", primary_key: Some("id") }}
 2 {uid: 2, status: enqueued, kind: IndexDeletion { index_uid: "doggos" }}
 ----------------------------------------------------------------------
 ### Status:
 enqueued [0,1,2,]
 ----------------------------------------------------------------------
 ### Kind:
+"indexCreation" [0,1,]
 "indexDeletion" [2,]
-"snapshot" [0,1,]
 ----------------------------------------------------------------------
 ### Index Tasks:
+a [0,1,]
 doggos [2,]
 ----------------------------------------------------------------------
 ### Index Mapper:
