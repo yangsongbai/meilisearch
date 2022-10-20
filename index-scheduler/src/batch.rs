@@ -378,6 +378,9 @@ impl IndexScheduler {
     /// 4. We get the *next* dump to process.
     /// 5. We get the *next* tasks to process for a specific index.
     pub(crate) fn create_next_batch(&self, rtxn: &RoTxn) -> Result<Option<Batch>> {
+        #[cfg(test)]
+        self.maybe_fail(crate::tests::FailureLocation::InsideCreateBatch)?;
+
         let enqueued = &self.get_status(rtxn, Status::Enqueued)?;
         let to_cancel = self.get_kind(rtxn, Kind::TaskCancelation)? & enqueued;
 
@@ -457,6 +460,11 @@ impl IndexScheduler {
     }
 
     pub(crate) fn process_batch(&self, batch: Batch) -> Result<Vec<Task>> {
+        #[cfg(test)]
+        self.maybe_fail(crate::tests::FailureLocation::InsideProcessBatch)?;
+        #[cfg(test)]
+        self.maybe_fail(crate::tests::FailureLocation::PanicInsideProcessBatch)?;
+
         match batch {
             Batch::TaskCancelation(mut task) => {
                 // 1. Retrieve the tasks that matched the query at enqueue-time.

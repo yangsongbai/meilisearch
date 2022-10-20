@@ -30,6 +30,8 @@ pub fn snapshot_index_scheduler(scheduler: &IndexScheduler) -> String {
         wake_up: _,
         dumps_path: _,
         test_breakpoint_sdr: _,
+        planned_failures: _,
+        run_loop_iteration: _,
     } = scheduler;
 
     let rtxn = env.read_txn().unwrap();
@@ -85,7 +87,7 @@ pub fn snapshot_index_scheduler(scheduler: &IndexScheduler) -> String {
     snap
 }
 
-fn snapshot_file_store(file_store: &file_store::FileStore) -> String {
+pub fn snapshot_file_store(file_store: &file_store::FileStore) -> String {
     let mut snap = String::new();
     for uuid in file_store.__all_uuids() {
         snap.push_str(&format!("{uuid}\n"));
@@ -93,7 +95,7 @@ fn snapshot_file_store(file_store: &file_store::FileStore) -> String {
     snap
 }
 
-fn snapshot_bitmap(r: &RoaringBitmap) -> String {
+pub fn snapshot_bitmap(r: &RoaringBitmap) -> String {
     let mut snap = String::new();
     snap.push('[');
     for x in r {
@@ -103,7 +105,7 @@ fn snapshot_bitmap(r: &RoaringBitmap) -> String {
     snap
 }
 
-fn snapshot_all_tasks(rtxn: &RoTxn, db: Database<OwnedType<BEU32>, SerdeJson<Task>>) -> String {
+pub fn snapshot_all_tasks(rtxn: &RoTxn, db: Database<OwnedType<BEU32>, SerdeJson<Task>>) -> String {
     let mut snap = String::new();
     let mut iter = db.iter(rtxn).unwrap();
     while let Some(next) = iter.next() {
@@ -113,7 +115,7 @@ fn snapshot_all_tasks(rtxn: &RoTxn, db: Database<OwnedType<BEU32>, SerdeJson<Tas
     snap
 }
 
-fn snapshot_date_db(
+pub fn snapshot_date_db(
     rtxn: &RoTxn,
     db: Database<OwnedType<BEI128>, CboRoaringBitmapCodec>,
 ) -> String {
@@ -126,7 +128,7 @@ fn snapshot_date_db(
     snap
 }
 
-fn snapshot_task(task: &Task) -> String {
+pub fn snapshot_task(task: &Task) -> String {
     let mut snap = String::new();
     let Task {
         uid,
@@ -194,7 +196,10 @@ fn snaphsot_details(d: &Details) -> String {
     }
 }
 
-fn snapshot_status(rtxn: &RoTxn, db: Database<SerdeBincode<Status>, RoaringBitmapCodec>) -> String {
+pub fn snapshot_status(
+    rtxn: &RoTxn,
+    db: Database<SerdeBincode<Status>, RoaringBitmapCodec>,
+) -> String {
     let mut snap = String::new();
     let mut iter = db.iter(rtxn).unwrap();
     while let Some(next) = iter.next() {
@@ -203,7 +208,7 @@ fn snapshot_status(rtxn: &RoTxn, db: Database<SerdeBincode<Status>, RoaringBitma
     }
     snap
 }
-fn snapshot_kind(rtxn: &RoTxn, db: Database<SerdeBincode<Kind>, RoaringBitmapCodec>) -> String {
+pub fn snapshot_kind(rtxn: &RoTxn, db: Database<SerdeBincode<Kind>, RoaringBitmapCodec>) -> String {
     let mut snap = String::new();
     let mut iter = db.iter(rtxn).unwrap();
     while let Some(next) = iter.next() {
@@ -214,7 +219,7 @@ fn snapshot_kind(rtxn: &RoTxn, db: Database<SerdeBincode<Kind>, RoaringBitmapCod
     snap
 }
 
-fn snapshot_index_tasks(rtxn: &RoTxn, db: Database<Str, RoaringBitmapCodec>) -> String {
+pub fn snapshot_index_tasks(rtxn: &RoTxn, db: Database<Str, RoaringBitmapCodec>) -> String {
     let mut snap = String::new();
     let mut iter = db.iter(rtxn).unwrap();
     while let Some(next) = iter.next() {
@@ -224,7 +229,7 @@ fn snapshot_index_tasks(rtxn: &RoTxn, db: Database<Str, RoaringBitmapCodec>) -> 
     snap
 }
 
-fn snapshot_index_mapper(rtxn: &RoTxn, mapper: &IndexMapper) -> String {
+pub fn snapshot_index_mapper(rtxn: &RoTxn, mapper: &IndexMapper) -> String {
     let names = mapper
         .indexes(rtxn)
         .unwrap()
