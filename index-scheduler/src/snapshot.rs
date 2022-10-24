@@ -13,7 +13,6 @@ pub fn snapshot_index_scheduler(scheduler: &IndexScheduler) -> String {
     let IndexScheduler {
         autobatching_enabled,
         must_stop_processing: _,
-        processing_tasks,
         file_store,
         env,
         all_tasks,
@@ -35,12 +34,7 @@ pub fn snapshot_index_scheduler(scheduler: &IndexScheduler) -> String {
 
     let mut snap = String::new();
 
-    let processing_tasks = processing_tasks.read().unwrap().processing.clone();
     snap.push_str(&format!("### Autobatching Enabled = {autobatching_enabled}\n"));
-    snap.push_str("### Processing Tasks:\n");
-    snap.push_str(&snapshot_bitmap(&processing_tasks));
-    snap.push_str("\n----------------------------------------------------------------------\n");
-
     snap.push_str("### All Tasks:\n");
     snap.push_str(&snapshot_all_tasks(&rtxn, *all_tasks));
     snap.push_str("----------------------------------------------------------------------\n");
@@ -227,11 +221,6 @@ pub fn snapshot_index_tasks(rtxn: &RoTxn, db: Database<Str, RoaringBitmapCodec>)
 }
 
 pub fn snapshot_index_mapper(rtxn: &RoTxn, mapper: &IndexMapper) -> String {
-    let names = mapper
-        .indexes(rtxn)
-        .unwrap()
-        .into_iter()
-        .map(|(n, _)| n)
-        .collect::<Vec<_>>();
+    let names = mapper.indexes(rtxn).unwrap().into_iter().map(|(n, _)| n).collect::<Vec<_>>();
     format!("{names:?}")
 }

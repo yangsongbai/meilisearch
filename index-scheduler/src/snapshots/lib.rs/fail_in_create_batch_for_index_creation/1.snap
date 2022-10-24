@@ -2,14 +2,12 @@
 source: index-scheduler/src/lib.rs
 ---
 ### Autobatching Enabled = true
-### Processing Tasks:
-[0,]
-----------------------------------------------------------------------
 ### All Tasks:
-0 {uid: 0, status: enqueued, details: { primary_key: Some("mouse") }, kind: IndexCreation { index_uid: "catto", primary_key: Some("mouse") }}
+0 {uid: 0, status: processing, details: { primary_key: Some("mouse") }, kind: IndexCreation { index_uid: "catto", primary_key: Some("mouse") }}
 ----------------------------------------------------------------------
 ### Status:
-enqueued [0,]
+enqueued []
+processing [0,]
 ----------------------------------------------------------------------
 ### Kind:
 "indexCreation" [0,]
@@ -24,6 +22,7 @@ catto [0,]
 [timestamp] [0,]
 ----------------------------------------------------------------------
 ### Started At:
+[timestamp] [0,]
 ----------------------------------------------------------------------
 ### Finished At:
 ----------------------------------------------------------------------

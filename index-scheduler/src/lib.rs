@@ -30,6 +30,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub type TaskId = u32;
 
 use dump::{KindDump, TaskDump, UpdateFile};
+
 pub use error::Error;
 use meilisearch_types::milli::documents::DocumentsBatchBuilder;
 use meilisearch_types::tasks::{Kind, KindWithContent, Status, Task};
@@ -39,7 +40,7 @@ use utils::keep_tasks_within_datetimes;
 use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::Relaxed;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use file_store::FileStore;
 use meilisearch_types::error::ResponseError;
@@ -68,7 +69,7 @@ pub struct Query {
     pub limit: Option<u32>,
     /// The minimum [task id](`meilisearch_types::tasks::Task::uid`) to be matched
     pub from: Option<u32>,
-    /// The allowed [statuses](`meilisearch_types::tasks::Task::status`) of the matched tasls
+    /// The allowed [statuses](`meilisearch_types::tasks::Task::status`) of the matched tasks
     pub status: Option<Vec<Status>>,
     /// The allowed [kinds](meilisearch_types::tasks::Kind) of the matched tasks.
     ///
@@ -130,37 +131,37 @@ impl Query {
     }
 }
 
-#[derive(Debug, Clone)]
-struct ProcessingTasks {
-    /// The date and time at which the indexation started.
-    started_at: OffsetDateTime,
-    /// The list of tasks ids that are currently running.
-    processing: RoaringBitmap,
-}
+// #[derive(Debug, Clone)]
+// struct ProcessingTasks {
+//     /// The date and time at which the indexation started.
+//     started_at: OffsetDateTime,
+//     /// The list of tasks ids that are currently running.
+//     processing: RoaringBitmap,
+// }
 
-impl ProcessingTasks {
-    /// Creates an empty `ProcessingAt` struct.
-    fn new() -> ProcessingTasks {
-        ProcessingTasks { started_at: OffsetDateTime::now_utc(), processing: RoaringBitmap::new() }
-    }
+// impl ProcessingTasks {
+//     /// Creates an empty `ProcessingAt` struct.
+//     fn new() -> ProcessingTasks {
+//         ProcessingTasks { started_at: OffsetDateTime::now_utc(), processing: RoaringBitmap::new() }
+//     }
 
-    /// Stores the currently processing tasks, and the date time at which it started.
-    fn start_processing_at(&mut self, started_at: OffsetDateTime, processing: RoaringBitmap) {
-        self.started_at = started_at;
-        self.processing = processing;
-    }
+//     /// Stores the currently processing tasks, and the date time at which it started.
+//     fn start_processing_at(&mut self, started_at: OffsetDateTime, processing: RoaringBitmap) {
+//         self.started_at = started_at;
+//         self.processing = processing;
+//     }
 
-    /// Set the processing tasks to an empty list.
-    fn stop_processing_at(&mut self, stopped_at: OffsetDateTime) {
-        self.started_at = stopped_at;
-        self.processing = RoaringBitmap::new();
-    }
+//     /// Set the processing tasks to an empty list.
+//     fn stop_processing_at(&mut self, stopped_at: OffsetDateTime) {
+//         self.started_at = stopped_at;
+//         self.processing = RoaringBitmap::new();
+//     }
 
-    /// Returns `true` if there, at least, is one task that is currently processing we must stop.
-    fn must_cancel_processing_tasks(&self, canceled_tasks: &RoaringBitmap) -> bool {
-        !self.processing.is_disjoint(canceled_tasks)
-    }
-}
+//     /// Returns `true` if there, at least, is one task that is currently processing we must stop.
+//     fn must_cancel_processing_tasks(&self, canceled_tasks: &RoaringBitmap) -> bool {
+//         !self.processing.is_disjoint(canceled_tasks)
+//     }
+// }
 
 #[derive(Default, Clone, Debug)]
 struct MustStopProcessing(Arc<AtomicBool>);
@@ -199,9 +200,8 @@ pub struct IndexScheduler {
     /// A boolean that can be set to true to stop the currently processing tasks.
     pub(crate) must_stop_processing: MustStopProcessing,
 
-    /// The list of tasks currently processing
-    pub(crate) processing_tasks: Arc<RwLock<ProcessingTasks>>,
-
+    // /// The list of tasks currently processing
+    // pub(crate) processing_tasks: Arc<RwLock<ProcessingTasks>>,
     /// The list of files referenced by the tasks
     pub(crate) file_store: FileStore,
 
@@ -209,7 +209,6 @@ pub struct IndexScheduler {
     pub(crate) all_tasks: Database<OwnedType<BEU32>, SerdeJson<Task>>,
 
     /// All the tasks ids grouped by their status.
-    // TODO we should not be able to serialize a `Status::Processing` in this database.
     pub(crate) status: Database<SerdeBincode<Status>, RoaringBitmapCodec>,
     /// All the tasks ids grouped by their kind.
     pub(crate) kind: Database<SerdeBincode<Kind>, RoaringBitmapCodec>,
@@ -256,14 +255,14 @@ pub struct IndexScheduler {
 
     #[cfg(test)]
     /// A counter that is incremented before every call to [`tick`](IndexScheduler::tick)
-    run_loop_iteration: Arc<RwLock<usize>>,
+    run_loop_iteration: Arc<std::sync::RwLock<usize>>,
 }
 impl IndexScheduler {
     fn private_clone(&self) -> Self {
         Self {
             env: self.env.clone(),
             must_stop_processing: self.must_stop_processing.clone(),
-            processing_tasks: self.processing_tasks.clone(),
+            // processing_tasks: self.processing_tasks.clone(),
             file_store: self.file_store.clone(),
             all_tasks: self.all_tasks.clone(),
             status: self.status.clone(),
@@ -335,7 +334,7 @@ impl IndexScheduler {
         // allow unreachable_code to get rids of the warning in the case of a test build.
         let this = Self {
             must_stop_processing: MustStopProcessing::default(),
-            processing_tasks: Arc::new(RwLock::new(ProcessingTasks::new())),
+            // processing_tasks: Arc::new(RwLock::new(ProcessingTasks::new())),
             file_store,
             all_tasks: env.create_database(Some(db_name::ALL_TASKS))?,
             status: env.create_database(Some(db_name::STATUS))?,
@@ -356,7 +355,7 @@ impl IndexScheduler {
             #[cfg(test)]
             planned_failures,
             #[cfg(test)]
-            run_loop_iteration: Arc::new(RwLock::new(0)),
+            run_loop_iteration: Arc::new(std::sync::RwLock::new(0)),
         };
 
         this.run();
@@ -411,11 +410,12 @@ impl IndexScheduler {
             tasks &= RoaringBitmap::from_iter(uids);
         }
 
-        if let Some(status) = &query.status {
+        if let Some(statuses) = &query.status {
             let mut status_tasks = RoaringBitmap::new();
-            for status in status {
-                status_tasks |= self.get_status(&rtxn, *status)?;
+            for &status in statuses {
+                status_tasks |= self.get_status(&rtxn, status)?;
             }
+
             tasks &= status_tasks;
         }
 
@@ -472,22 +472,20 @@ impl IndexScheduler {
             tasks.into_iter().rev().take(query.limit.unwrap_or(u32::MAX) as usize),
         )?;
 
-        let ProcessingTasks { started_at, processing, .. } =
-            self.processing_tasks.read().map_err(|_| Error::CorruptedTaskQueue)?.clone();
+        // let ProcessingTasks { started_at, processing, .. } =
+        //     self.processing_tasks.read().map_err(|_| Error::CorruptedTaskQueue)?.clone();
 
         let ret = tasks.into_iter();
-        if processing.is_empty() {
-            Ok(ret.collect())
-        } else {
-            Ok(ret
-                .map(|task| match processing.contains(task.uid) {
-                    true => {
-                        Task { status: Status::Processing, started_at: Some(started_at), ..task }
-                    }
-                    false => task,
-                })
-                .collect())
-        }
+        // if processing.is_empty() {
+        //     Ok(ret.collect())
+        // } else {
+        Ok(ret
+            // .map(|task| match processing.contains(task.uid) {
+            //     true => Task { status: Status::Processing, started_at: Some(started_at), ..task },
+            //     false => task,
+            // })
+            .collect())
+        // }
     }
 
     /// Register a new task in the scheduler.
@@ -536,8 +534,9 @@ impl IndexScheduler {
         // we inform the processing tasks to stop (if necessary).
         if let KindWithContent::TaskCancelation { tasks, .. } = kind {
             let tasks_to_cancel = RoaringBitmap::from_iter(tasks);
-            if self.processing_tasks.read().unwrap().must_cancel_processing_tasks(&tasks_to_cancel)
-            {
+            let rtxn = self.env.read_txn()?;
+            let processing_tasks = self.get_status(&rtxn, Status::Processing)?;
+            if !processing_tasks.is_disjoint(&tasks_to_cancel) {
                 self.must_stop_processing.must_stop();
             }
         }
@@ -648,7 +647,6 @@ impl IndexScheduler {
                 })?;
             }
         }
-
         self.update_status(&mut wtxn, task.status, |bitmap| {
             bitmap.insert(task.uid);
         })?;
@@ -712,28 +710,73 @@ impl IndexScheduler {
             self.breakpoint(Breakpoint::Start);
         }
 
-        let rtxn = self.env.read_txn()?;
-        let batch = match self.create_next_batch(&rtxn)? {
+        let mut wtxn = self.env.write_txn()?; // TODO: map the error to mark it as irrecoverable
+
+        // At this point the task queue might be in an inconsistent state
+        // where some of the tasks in the database are "processing". This might
+        // have occurred because of a failure to update the task database in the
+        // previous `tick` function, or because meilisearch was suddenly stopped
+        // in the middle of executing a batch.
+        // We collect the tasks marked as "processing" and change their status to `Enqueued`
+        // so that they can be dequeued and executed again. If, for some reason, the index
+        // scheduler is not able to perform these operations, then we are in an
+        // irrecoverable state.
+
+        let old_processing_tasks = self.get_status(&wtxn, Status::Processing)?;
+        for id in old_processing_tasks.iter() {
+            let mut task = self.get_task(&wtxn, id)?.ok_or(Error::CorruptedTaskQueue)?;
+            task.started_at = None;
+            task.status = Status::Enqueued;
+            self.update_task(&mut wtxn, &task)?; // TODO: map the error to mark it as irrecoverable
+        }
+        self.update_status(&mut wtxn, Status::Enqueued, |bitmap| {
+            *bitmap |= &old_processing_tasks;
+        })?; // TODO: map the error to mark it as irrecoverable
+        self.update_status(&mut wtxn, Status::Processing, |bitmap| {
+            *bitmap -= &old_processing_tasks;
+        })?; // TODO: map the error to mark it as irrecoverable
+
+        // Now the task queue is in a good state. Start by creating a batch of tasks
+        // to execute.
+
+        let batch = match self.create_next_batch(&wtxn)? {
+            // TODO: map the error to mark it as irrecoverable
             Some(batch) => batch,
             None => return Ok(0),
         };
-        drop(rtxn);
 
-        // 1. store the starting date with the bitmap of processing tasks.
-        let mut ids = batch.ids();
-        ids.sort_unstable();
-        let processed_tasks = ids.len();
-        let processing_tasks = RoaringBitmap::from_sorted_iter(ids.iter().copied()).unwrap();
+        // For all the tasks that are part of the batch, update their status to "processing".
+        let ids = batch.ids();
+        let processing_tasks = RoaringBitmap::from_iter(ids.iter().copied());
+
+        let number_of_processed_tasks = ids.len();
         let started_at = OffsetDateTime::now_utc();
 
-        // We reset the must_stop flag to be sure that we don't stop processing tasks
+        // Update the dequeued tasks to set their status to `processing`.
+        for id in ids {
+            let mut task = self.get_task(&wtxn, id)?.ok_or(Error::CorruptedTaskQueue)?;
+            task.started_at = Some(started_at);
+            task.status = Status::Processing;
+            self.update_task(&mut wtxn, &task)?; // TODO: map the error to mark it as irrecoverable
+        }
+        self.update_status(&mut wtxn, Status::Processing, |bitmap| {
+            *bitmap |= &processing_tasks;
+        })?; // TODO: map the error to mark it as irrecoverable
+        self.update_status(&mut wtxn, Status::Enqueued, |bitmap| {
+            *bitmap -= &processing_tasks;
+        })?; // TODO: map the error to mark it as irrecoverable
+
+        wtxn.commit()?; // TODO: map the error to mark it as irrecoverable
+
+        // We reset the must_stop flag to be sure that we don't stop processing tasks.
         self.must_stop_processing.reset();
-        self.processing_tasks.write().unwrap().start_processing_at(started_at, processing_tasks);
 
         #[cfg(test)]
         self.breakpoint(Breakpoint::BatchCreated);
 
         // 2. Process the tasks
+        // We do it in a separate thread with a cloned index scheduler so that we are able
+        // to catch panics happening during the processing of the batch.
         let res = {
             let cloned_index_scheduler = self.private_clone();
             let handle = std::thread::spawn(move || cloned_index_scheduler.process_batch(batch));
@@ -776,7 +819,7 @@ impl IndexScheduler {
             // In case of a failure we must get back and patch all the tasks with the error.
             Err(err) => {
                 let error: ResponseError = err.into();
-                for id in ids {
+                for id in &processing_tasks {
                     let mut task = self.get_task(&wtxn, id)?.ok_or(Error::CorruptedTaskQueue)?;
                     task.started_at = Some(started_at);
                     task.finished_at = Some(finished_at);
@@ -791,7 +834,6 @@ impl IndexScheduler {
                 }
             }
         }
-        self.processing_tasks.write().unwrap().stop_processing_at(finished_at);
 
         #[cfg(test)]
         self.maybe_fail(tests::FailureLocation::CommittingWtxn)?;
@@ -801,7 +843,7 @@ impl IndexScheduler {
         #[cfg(test)]
         self.breakpoint(Breakpoint::AfterProcessing);
 
-        Ok(processed_tasks)
+        Ok(number_of_processed_tasks)
     }
 
     pub(crate) fn delete_persisted_task_data(&self, task: &Task) -> Result<()> {
@@ -955,6 +997,11 @@ mod tests {
         fn wait_till(&self, breakpoint: Breakpoint) {
             self.test_breakpoint_rcv.iter().find(|b| *b == (breakpoint, false));
         }
+    }
+
+    #[test]
+    fn simple_new() {
+        crate::IndexScheduler::test(true, vec![]);
     }
 
     #[test]
@@ -1457,11 +1504,6 @@ mod tests {
     }
 
     #[test]
-    fn simple_new() {
-        crate::IndexScheduler::test(true, vec![]);
-    }
-
-    #[test]
     fn query_processing_tasks() {
         let (index_scheduler, handle) =
             IndexScheduler::test(true, vec![(1, FailureLocation::InsideCreateBatch)]);
@@ -1473,6 +1515,10 @@ mod tests {
         let query = Query { status: Some(vec![Status::Processing]), ..Default::default() };
         let processing_tasks = index_scheduler.get_task_ids(&query).unwrap();
         snapshot!(snapshot_bitmap(&processing_tasks), @"[0,]");
+
+        let query = Query { status: Some(vec![Status::Processing]), ..Default::default() };
+        let enqueued_tasks = index_scheduler.get_task_ids(&query).unwrap();
+        snapshot!(snapshot_bitmap(&enqueued_tasks), @"[0,]");
     }
 
     #[test]

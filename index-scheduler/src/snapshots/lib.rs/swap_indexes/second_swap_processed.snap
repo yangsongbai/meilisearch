@@ -2,9 +2,6 @@
 source: index-scheduler/src/lib.rs
 ---
 ### Autobatching Enabled = true
-### Processing Tasks:
-[]
-----------------------------------------------------------------------
 ### All Tasks:
 0 {uid: 0, status: succeeded, details: { primary_key: Some("id") }, kind: IndexCreation { index_uid: "b", primary_key: Some("id") }}
 1 {uid: 1, status: succeeded, details: { primary_key: Some("id") }, kind: IndexCreation { index_uid: "c", primary_key: Some("id") }}
@@ -15,6 +12,7 @@ source: index-scheduler/src/lib.rs
 ----------------------------------------------------------------------
 ### Status:
 enqueued []
+processing []
 succeeded [0,1,2,3,4,5,]
 ----------------------------------------------------------------------
 ### Kind:

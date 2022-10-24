@@ -51,7 +51,6 @@ impl IndexScheduler {
         if old_task == *task {
             return Ok(());
         }
-
         if old_task.status != task.status {
             self.update_status(wtxn, old_task.status, |bitmap| {
                 bitmap.remove(task.uid);
@@ -75,7 +74,9 @@ impl IndexScheduler {
             "Cannot update a task's enqueued_at time"
         );
         if old_task.started_at != task.started_at {
-            assert!(old_task.started_at.is_none(), "Cannot update a task's started_at time");
+            if let Some(old_started_at) = old_task.started_at {
+                remove_task_datetime(wtxn, self.started_at, old_started_at, old_task.uid)?;
+            }
             if let Some(started_at) = task.started_at {
                 insert_task_datetime(wtxn, self.started_at, started_at, task.uid)?;
             }
@@ -114,19 +115,7 @@ impl IndexScheduler {
     }
 
     pub(crate) fn get_status(&self, rtxn: &RoTxn, status: Status) -> Result<RoaringBitmap> {
-        match status {
-            Status::Processing => {
-                let tasks = self
-                    .processing_tasks
-                    .read()
-                    .map_err(|_| Error::CorruptedTaskQueue)?
-                    .processing
-                    .clone();
-
-                Ok(tasks)
-            }
-            status => Ok(self.status.get(rtxn, &status)?.unwrap_or_default()),
-        }
+        Ok(self.status.get(rtxn, &status)?.unwrap_or_default())
     }
 
     pub(crate) fn put_status(

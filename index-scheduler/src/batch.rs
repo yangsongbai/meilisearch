@@ -1029,7 +1029,7 @@ impl IndexScheduler {
     fn delete_matched_tasks(&self, wtxn: &mut RwTxn, matched_tasks: &RoaringBitmap) -> Result<u64> {
         // 1. Remove from this list the tasks that we are not allowed to delete
         let enqueued_tasks = self.get_status(wtxn, Status::Enqueued)?;
-        let processing_tasks = &self.processing_tasks.read().unwrap().processing.clone();
+        let processing_tasks = self.get_status(wtxn, Status::Processing)?;
 
         let all_task_ids = self.all_task_ids(wtxn)?;
         let mut to_delete_tasks = all_task_ids & matched_tasks;

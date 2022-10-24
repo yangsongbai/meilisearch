@@ -2,9 +2,6 @@
 source: index-scheduler/src/lib.rs
 ---
 ### Autobatching Enabled = true
-### Processing Tasks:
-[]
-----------------------------------------------------------------------
 ### All Tasks:
 0 {uid: 0, status: enqueued, details: { primary_key: Some("mouse") }, kind: IndexCreation { index_uid: "catto", primary_key: Some("mouse") }}
 1 {uid: 1, status: enqueued, details: { received_documents: 12, indexed_documents: None }, kind: DocumentAdditionOrUpdate { index_uid: "catto", primary_key: None, method: ReplaceDocuments, content_file: 00000000-0000-0000-0000-000000000000, documents_count: 12, allow_index_creation: true }}
