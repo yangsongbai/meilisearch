@@ -3,7 +3,7 @@ use actix_web::{web, HttpRequest, HttpResponse};
 use index_scheduler::IndexScheduler;
 use log::debug;
 use meilisearch_auth::IndexSearchRules;
-use meilisearch_types::error::ResponseError;
+use meilisearch_types::error::{MeiliDeserError, ResponseError};
 use serde::Deserialize;
 use serde_cs::vec::CS;
 use serde_json::Value;
@@ -11,6 +11,7 @@ use serde_json::Value;
 use crate::analytics::{Analytics, SearchAggregator};
 use crate::extractors::authentication::policies::*;
 use crate::extractors::authentication::GuardedData;
+use crate::extractors::deserr::ValidatedJson;
 use crate::extractors::sequential_extractor::SeqHandler;
 use crate::search::{
     perform_search, MatchingStrategy, SearchQuery, DEFAULT_CROP_LENGTH, DEFAULT_CROP_MARKER,
@@ -168,7 +169,8 @@ pub async fn search_with_url_query(
 pub async fn search_with_post(
     index_scheduler: GuardedData<ActionPolicy<{ actions::SEARCH }>, Data<IndexScheduler>>,
     index_uid: web::Path<String>,
-    params: web::Json<SearchQuery>,
+    // params: web::Json<SearchQuery>,
+    params: ValidatedJson<SearchQuery, MeiliDeserError>,
     req: HttpRequest,
     analytics: web::Data<dyn Analytics>,
 ) -> Result<HttpResponse, ResponseError> {

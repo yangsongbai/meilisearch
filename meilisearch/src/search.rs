@@ -26,32 +26,40 @@ pub const DEFAULT_CROP_MARKER: fn() -> String = || "…".to_string();
 pub const DEFAULT_HIGHLIGHT_PRE_TAG: fn() -> String = || "<em>".to_string();
 pub const DEFAULT_HIGHLIGHT_POST_TAG: fn() -> String = || "</em>".to_string();
 
-#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, Deserialize, PartialEq, deserr::DeserializeFromValue)]
+#[deserr(rename_all = camelCase, deny_unknown_fields)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SearchQuery {
     pub q: Option<String>,
     #[serde(default = "DEFAULT_SEARCH_OFFSET")]
+    #[deserr(default = DEFAULT_SEARCH_OFFSET())]
     pub offset: usize,
     #[serde(default = "DEFAULT_SEARCH_LIMIT")]
+    #[deserr(default = DEFAULT_SEARCH_LIMIT())]
     pub limit: usize,
     pub page: Option<usize>,
     pub hits_per_page: Option<usize>,
     pub attributes_to_retrieve: Option<BTreeSet<String>>,
     pub attributes_to_crop: Option<Vec<String>>,
     #[serde(default = "DEFAULT_CROP_LENGTH")]
+    #[deserr(default = DEFAULT_CROP_LENGTH())]
     pub crop_length: usize,
     pub attributes_to_highlight: Option<HashSet<String>>,
     // Default to false
     #[serde(default = "Default::default")]
+    #[deserr(default = Default::default())]
     pub show_matches_position: bool,
     pub filter: Option<Value>,
     pub sort: Option<Vec<String>>,
     pub facets: Option<Vec<String>>,
     #[serde(default = "DEFAULT_HIGHLIGHT_PRE_TAG")]
+    #[deserr(default = DEFAULT_HIGHLIGHT_PRE_TAG())]
     pub highlight_pre_tag: String,
     #[serde(default = "DEFAULT_HIGHLIGHT_POST_TAG")]
+    #[deserr(default = DEFAULT_HIGHLIGHT_POST_TAG())]
     pub highlight_post_tag: String,
     #[serde(default = "DEFAULT_CROP_MARKER")]
+    #[deserr(default = DEFAULT_CROP_MARKER())]
     pub crop_marker: String,
     #[serde(default)]
     pub matching_strategy: MatchingStrategy,
@@ -63,7 +71,8 @@ impl SearchQuery {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq, deserr::DeserializeFromValue)]
+#[deserr(rename_all = camelCase)]
 #[serde(rename_all = "camelCase")]
 pub enum MatchingStrategy {
     /// Remove query words from last to first

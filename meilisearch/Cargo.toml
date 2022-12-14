@@ -7,6 +7,7 @@ name = "meilisearch"
 version = "0.30.1"
 
 [dependencies]
+deserr = { path = "../../deserr", features = ["serde-json"] }
 actix-cors = "0.6.3"
 actix-http = { version = "3.2.2", default-features = false, features = ["compress-brotli", "compress-gzip", "rustls"] }
 actix-web = { version = "4.2.1", default-features = false, features = ["macros", "compress-brotli", "compress-gzip", "cookies", "rustls"] }
