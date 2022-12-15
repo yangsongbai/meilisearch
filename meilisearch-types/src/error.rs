@@ -529,9 +529,17 @@ impl deserr::DeserializeError for MeiliDeserError {
     fn missing_field(
         _self_: Option<Self>,
         field: &str,
-        _location: ValuePointerRef,
+        location: ValuePointerRef,
     ) -> Result<Self, Self> {
-        Err(MeiliDeserError(format!("missing field {field}")))
+        // serde_json original message:
+        // Json deserialize error: missing field `lol` at line 1 column 2
+
+        let location = if location.is_origin() {
+            format!(".")
+        } else {
+            format!(" in {}.", location.to_owned())
+        };
+        Err(MeiliDeserError(format!("Json deserialize error: missing field `{field}`{location}")))
     }
 
     /// Create a new error due to finding an unknown key.
