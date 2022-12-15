@@ -576,9 +576,18 @@ impl deserr::DeserializeError for MeiliDeserError {
     fn unexpected(
         _self_: Option<Self>,
         msg: &str,
-        _location: ValuePointerRef,
+        location: ValuePointerRef,
     ) -> Result<Self, Self> {
-        Err(MeiliDeserError(format!("unexpected {msg}")))
+        // serde_json original message:
+        // The json payload provided is malformed. `trailing characters at line 1 column 19`.
+
+        let location = if location.is_origin() {
+            format!(".")
+        } else {
+            format!(" in {}.", location.to_owned())
+        };
+
+        Err(MeiliDeserError(format!("The json payload provided is malformed: {msg}{location}")))
     }
 }
 
