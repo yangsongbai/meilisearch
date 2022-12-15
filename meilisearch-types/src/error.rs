@@ -509,17 +509,15 @@ impl deserr::DeserializeError for MeiliDeserError {
             ),
         };
 
+        let kind = actual.kind();
         // if we're not able to get the value as a string then we print nothing.
         let received = match serde_json::to_string(&serde_json::Value::from(actual)) {
-            OK(value) => format!("`{}`", value),
+            Ok(value) => format!("`{}`", value),
             Err(_) => String::new(),
         };
 
         let format = format!(
-            "Json deserialize error: invalid type: {} `{}`{} in `{}`.",
-            actual.kind(),
-            received,
-            expected,
+            "Json deserialize error: invalid type: {kind} {received}{expected} in `{}`.",
             location.to_owned()
         );
         Err(MeiliDeserError(format))
