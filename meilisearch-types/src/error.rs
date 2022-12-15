@@ -4,7 +4,7 @@ use std::fmt;
 use actix_web::http::StatusCode;
 use actix_web::{self as aweb, HttpResponseBuilder};
 use aweb::rt::task::JoinError;
-use deserr::{ValueKind, ValuePointer, ValuePointerRef};
+use deserr::{IntoValue, ValueKind, ValuePointer, ValuePointerRef};
 use milli::heed::{Error as HeedError, MdbError};
 use serde::{Deserialize, Serialize};
 
@@ -490,13 +490,39 @@ impl deserr::DeserializeError for MeiliDeserError {
     /// Create a new error due to an unexpected value kind.
     ///
     /// Return `Ok` to continue deserializing or `Err` to fail early.
-    fn incorrect_value_kind(
+    fn incorrect_value_kind<V: IntoValue>(
         _self_: Option<Self>,
-        actual: ValueKind,
-        _accepted: &[ValueKind],
-        _location: ValuePointerRef,
+        actual: deserr::Value<V>,
+        accepted: &[ValueKind],
+        location: ValuePointerRef,
     ) -> Result<Self, Self> {
-        Err(MeiliDeserError(format!("incorrect value kind {actual}")))
+        let expected = match accepted.len() {
+            0 => format!(""),
+            1 => format!(", expected a {}", accepted[0]),
+            _ => format!(
+                ", expected one of {}",
+                accepted
+                    .iter()
+                    .map(|accepted| accepted.to_string())
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            ),
+        };
+
+        // if we're not able to get the value as a string then we print nothing.
+        let received = match serde_json::to_string(&serde_json::Value::from(actual)) {
+            OK(value) => format!("`{}`", value),
+            Err(_) => String::new(),
+        };
+
+        let format = format!(
+            "Json deserialize error: invalid type: {} `{}`{} in `{}`.",
+            actual.kind(),
+            received,
+            expected,
+            location.to_owned()
+        );
+        Err(MeiliDeserError(format))
     }
 
     /// Create a new error due to a missing key.
