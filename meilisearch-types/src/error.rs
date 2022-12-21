@@ -482,112 +482,74 @@ impl deserr::MergeWithError<MeiliDeserError> for MeiliDeserError {
 }
 
 impl deserr::DeserializeError for MeiliDeserError {
-    /// Return the origin of the error, if it can be found
-    fn location(&self) -> Option<ValuePointer> {
-        None
-    }
-
-    /// Create a new error due to an unexpected value kind.
-    ///
-    /// Return `Ok` to continue deserializing or `Err` to fail early.
-    fn incorrect_value_kind<V: IntoValue>(
+    fn error<V: IntoValue>(
         _self_: Option<Self>,
-        actual: deserr::Value<V>,
-        accepted: &[ValueKind],
+        error: deserr::ErrorKind<V>,
         location: ValuePointerRef,
     ) -> Result<Self, Self> {
-        let expected = match accepted.len() {
-            0 => format!(""),
-            1 => format!(", expected a {}", accepted[0]),
-            _ => format!(
-                ", expected one of {}",
-                accepted
-                    .iter()
-                    .map(|accepted| accepted.to_string())
-                    .collect::<Vec<String>>()
-                    .join(", ")
-            ),
-        };
-
-        let kind = actual.kind();
-        // if we're not able to get the value as a string then we print nothing.
-        let received = match serde_json::to_string(&serde_json::Value::from(actual)) {
-            Ok(value) => format!("`{}`", value),
-            Err(_) => String::new(),
-        };
-
-        let format = format!(
-            "Json deserialize error: invalid type: {kind} {received}{expected} in `{}`.",
-            location.to_owned()
-        );
-        Err(MeiliDeserError(format))
-    }
-
-    /// Create a new error due to a missing key.
-    ///
-    /// Return `Ok` to continue deserializing or `Err` to fail early.
-    fn missing_field(
-        _self_: Option<Self>,
-        field: &str,
-        location: ValuePointerRef,
-    ) -> Result<Self, Self> {
-        // serde_json original message:
-        // Json deserialize error: missing field `lol` at line 1 column 2
-
         let location = if location.is_origin() {
             format!(".")
         } else {
-            format!(" in {}.", location.to_owned())
-        };
-        Err(MeiliDeserError(format!("Json deserialize error: missing field `{field}`{location}")))
-    }
-
-    /// Create a new error due to finding an unknown key.
-    ///
-    /// Return `Ok` to continue deserializing or `Err` to fail early.
-    fn unknown_key(
-        _self_: Option<Self>,
-        key: &str,
-        accepted: &[&str],
-        location: ValuePointerRef,
-    ) -> Result<Self, Self> {
-        let format = format!(
-            "Json deserialize error: unknown field `{}`, expected one of {}",
-            key,
-            accepted
-                .iter()
-                .map(|accepted| format!("`{}`", accepted))
-                .collect::<Vec<String>>()
-                .join(", "),
-        );
-
-        let format = if location.is_origin() {
-            format!("{}.", format)
-        } else {
-            format!("{} in {}.", format, location.to_owned())
+            format!(" in `{}`.", location.to_owned())
         };
 
-        Err(MeiliDeserError(format))
-    }
+        match error {
+            deserr::ErrorKind::IncorrectValueKind { actual, accepted } => {
+                let expected = match accepted.len() {
+                    0 => format!(""),
+                    1 => format!(", expected a {}", accepted[0]),
+                    _ => format!(
+                        ", expected one of {}",
+                        accepted
+                            .iter()
+                            .map(|accepted| accepted.to_string())
+                            .collect::<Vec<String>>()
+                            .join(", ")
+                    ),
+                };
 
-    /// Create a new error with the custom message.
-    ///
-    /// Return `Ok` to continue deserializing or `Err` to fail early.
-    fn unexpected(
-        _self_: Option<Self>,
-        msg: &str,
-        location: ValuePointerRef,
-    ) -> Result<Self, Self> {
-        // serde_json original message:
-        // The json payload provided is malformed. `trailing characters at line 1 column 19`.
+                let kind = actual.kind();
+                // if we're not able to get the value as a string then we print nothing.
+                let received = match serde_json::to_string(&serde_json::Value::from(actual)) {
+                    Ok(value) => format!("`{}`", value),
+                    Err(_) => String::new(),
+                };
 
-        let location = if location.is_origin() {
-            format!(".")
-        } else {
-            format!(" in {}.", location.to_owned())
-        };
+                let format = format!(
+                    "Json deserialize error: invalid type: {kind} {received}{expected}{location}",
+                );
+                Err(MeiliDeserError(format))
+            }
+            deserr::ErrorKind::MissingField { field } => {
+                // serde_json original message:
+                // Json deserialize error: missing field `lol` at line 1 column 2
 
-        Err(MeiliDeserError(format!("The json payload provided is malformed: {msg}{location}")))
+                Err(MeiliDeserError(format!(
+                    "Json deserialize error: missing field `{field}`{location}"
+                )))
+            }
+            deserr::ErrorKind::UnknownKey { key, accepted } => {
+                let format = format!(
+                    "Json deserialize error: unknown field `{}`, expected one of {}{}",
+                    key,
+                    accepted
+                        .iter()
+                        .map(|accepted| format!("`{}`", accepted))
+                        .collect::<Vec<String>>()
+                        .join(", "),
+                    location
+                );
+
+                Err(MeiliDeserError(format))
+            }
+            deserr::ErrorKind::Unexpected { msg } => {
+                // serde_json original message:
+                // The json payload provided is malformed. `trailing characters at line 1 column 19`.
+                Err(MeiliDeserError(format!(
+                    "The json payload provided is malformed: {msg}{location}"
+                )))
+            }
+        }
     }
 }
 
