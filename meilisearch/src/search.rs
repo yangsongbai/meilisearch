@@ -27,8 +27,8 @@ pub const DEFAULT_HIGHLIGHT_PRE_TAG: fn() -> String = || "<em>".to_string();
 pub const DEFAULT_HIGHLIGHT_POST_TAG: fn() -> String = || "</em>".to_string();
 
 #[derive(Debug, Clone, Default, Deserialize, PartialEq, deserr::DeserializeFromValue)]
-#[deserr(rename_all = camelCase, deny_unknown_fields)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[deserr(rename_all = camelCase, deny_unknown_fields)]
 pub struct SearchQuery {
     pub q: Option<String>,
     #[serde(default = "DEFAULT_SEARCH_OFFSET")]

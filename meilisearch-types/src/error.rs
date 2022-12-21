@@ -435,6 +435,7 @@ impl ErrorCode for HeedError {
 
 #[derive(Debug)]
 pub struct MeiliDeserError(String);
+
 impl std::fmt::Display for MeiliDeserError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
@@ -457,19 +458,6 @@ impl deserr::MergeWithError<Infallible> for MeiliDeserError {
         unreachable!()
     }
 }
-
-/*
-impl deserr::MergeWithError<milli::CriterionError> for MeiliDeserError {
-    fn merge(
-        _self_: Option<Self>,
-        other: milli::CriterionError,
-        merge_location: deserr::ValuePointerRef,
-    ) -> Result<Self, Self> {
-        let pointer = merge_location.to_owned();
-        Err(MeiliDeserError(format!("{pointer:?} -> {other} ")))
-    }
-}
-*/
 
 impl deserr::MergeWithError<MeiliDeserError> for MeiliDeserError {
     fn merge(

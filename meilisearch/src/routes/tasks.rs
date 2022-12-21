@@ -168,6 +168,7 @@ pub struct TaskCommonQueryRaw {
     pub statuses: Option<CS<StarOr<String>>>,
     pub index_uids: Option<CS<StarOr<String>>>,
 }
+
 impl TaskCommonQueryRaw {
     fn validate(self) -> Result<TaskCommonQuery, ResponseError> {
         let Self { uids, canceled_by, types, statuses, index_uids } = self;

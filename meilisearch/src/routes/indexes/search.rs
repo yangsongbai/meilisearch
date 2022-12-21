@@ -11,7 +11,8 @@ use serde_json::Value;
 use crate::analytics::{Analytics, SearchAggregator};
 use crate::extractors::authentication::policies::*;
 use crate::extractors::authentication::GuardedData;
-use crate::extractors::deserr::ValidatedJson;
+use crate::extractors::json::ValidatedJson;
+use crate::extractors::query_parameters::QueryParameter;
 use crate::extractors::sequential_extractor::SeqHandler;
 use crate::search::{
     perform_search, MatchingStrategy, SearchQuery, DEFAULT_CROP_LENGTH, DEFAULT_CROP_MARKER,
@@ -27,33 +28,42 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     );
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, deserr::DeserializeFromValue)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[deserr(rename_all = camelCase, deny_unknown_fields)]
 pub struct SearchQueryGet {
     q: Option<String>,
     #[serde(default = "DEFAULT_SEARCH_OFFSET")]
+    #[deserr(default = DEFAULT_SEARCH_OFFSET())]
     offset: usize,
     #[serde(default = "DEFAULT_SEARCH_LIMIT")]
+    #[deserr(default = DEFAULT_SEARCH_LIMIT())]
     limit: usize,
     page: Option<usize>,
     hits_per_page: Option<usize>,
     attributes_to_retrieve: Option<CS<String>>,
     attributes_to_crop: Option<CS<String>>,
     #[serde(default = "DEFAULT_CROP_LENGTH")]
+    #[deserr(default = DEFAULT_CROP_LENGTH())]
     crop_length: usize,
     attributes_to_highlight: Option<CS<String>>,
     filter: Option<String>,
     sort: Option<String>,
     #[serde(default = "Default::default")]
+    #[deserr(default = Default::default())]
     show_matches_position: bool,
     facets: Option<CS<String>>,
     #[serde(default = "DEFAULT_HIGHLIGHT_PRE_TAG")]
+    #[deserr(default = DEFAULT_HIGHLIGHT_PRE_TAG())]
     highlight_pre_tag: String,
     #[serde(default = "DEFAULT_HIGHLIGHT_POST_TAG")]
+    #[deserr(default = DEFAULT_HIGHLIGHT_POST_TAG())]
     highlight_post_tag: String,
     #[serde(default = "DEFAULT_CROP_MARKER")]
+    #[deserr(default = DEFAULT_CROP_MARKER())]
     crop_marker: String,
     #[serde(default)]
+    #[deserr(default = Default::default())]
     matching_strategy: MatchingStrategy,
 }
 
@@ -137,7 +147,8 @@ fn fix_sort_query_parameters(sort_query: &str) -> Vec<String> {
 pub async fn search_with_url_query(
     index_scheduler: GuardedData<ActionPolicy<{ actions::SEARCH }>, Data<IndexScheduler>>,
     index_uid: web::Path<String>,
-    params: web::Query<SearchQueryGet>,
+    // params: web::Query<SearchQueryGet>,
+    params: QueryParameter<SearchQueryGet, MeiliDeserError>,
     req: HttpRequest,
     analytics: web::Data<dyn Analytics>,
 ) -> Result<HttpResponse, ResponseError> {
