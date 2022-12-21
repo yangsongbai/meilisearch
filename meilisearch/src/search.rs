@@ -62,6 +62,7 @@ pub struct SearchQuery {
     #[deserr(default = DEFAULT_CROP_MARKER())]
     pub crop_marker: String,
     #[serde(default)]
+    #[deserr(default = Default::default())]
     pub matching_strategy: MatchingStrategy,
 }
 
