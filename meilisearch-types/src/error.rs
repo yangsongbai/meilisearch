@@ -99,6 +99,7 @@ enum ErrorType {
     InternalError,
     InvalidRequestError,
     AuthenticationError,
+    Search,
 }
 
 impl fmt::Display for ErrorType {
@@ -109,6 +110,7 @@ impl fmt::Display for ErrorType {
             InternalError => write!(f, "internal"),
             InvalidRequestError => write!(f, "invalid_request"),
             AuthenticationError => write!(f, "auth"),
+            Search => write!(f, "search"),
         }
     }
 }
@@ -135,6 +137,25 @@ pub enum Code {
 
     Filter,
     Sort,
+
+    // Invalid search request
+    InvalidSearchParameterQ,
+    InvalidSearchParameterOffset,
+    InvalidSearchParameterLimit,
+    InvalidSearchParameterPage,
+    InvalidSearchParameterHitsPerPage,
+    InvalidSearchParameterAttributesToRetrieve,
+    InvalidSearchParameterAttributesToCrop,
+    InvalidSearchParameterCropLength,
+    InvalidSearchParameterAttributesToHighlight,
+    InvalidSearchParameterShowMatchesPosition,
+    InvalidSearchParameterFilter,
+    InvalidSearchParameterSort,
+    InvalidSearchParameterFacets,
+    InvalidSearchParameterHighlightPreTag,
+    InvalidSearchParameterHighlightPostTag,
+    InvalidSearchParameterCropMarker,
+    InvalidSearchParameterMatchingStrategy,
 
     BadParameter,
     BadRequest,
@@ -325,6 +346,64 @@ impl Code {
             DuplicateIndexFound => {
                 ErrCode::invalid("duplicate_index_found", StatusCode::BAD_REQUEST)
             }
+            InvalidSearchParameterQ => {
+                ErrCode::search("invalid_search_parameter_q", StatusCode::BAD_REQUEST)
+            }
+            InvalidSearchParameterOffset => {
+                ErrCode::search("invalid_search_parameter_offset", StatusCode::BAD_REQUEST)
+            }
+            InvalidSearchParameterLimit => {
+                ErrCode::search("invalid_search_parameter_limit", StatusCode::BAD_REQUEST)
+            }
+            InvalidSearchParameterPage => {
+                ErrCode::search("invalid_search_parameter_page", StatusCode::BAD_REQUEST)
+            }
+            InvalidSearchParameterHitsPerPage => {
+                ErrCode::search("invalid_search_parameter_hits_per_page", StatusCode::BAD_REQUEST)
+            }
+            InvalidSearchParameterAttributesToRetrieve => ErrCode::search(
+                "invalid_search_parameter_attributes_to_retrieve",
+                StatusCode::BAD_REQUEST,
+            ),
+            InvalidSearchParameterAttributesToCrop => ErrCode::search(
+                "invalid_search_parameter_attributes_to_crop",
+                StatusCode::BAD_REQUEST,
+            ),
+            InvalidSearchParameterCropLength => {
+                ErrCode::search("invalid_search_parameter_crop_length", StatusCode::BAD_REQUEST)
+            }
+            InvalidSearchParameterAttributesToHighlight => ErrCode::search(
+                "invalid_search_parameter_attributes_to_highlight",
+                StatusCode::BAD_REQUEST,
+            ),
+            InvalidSearchParameterShowMatchesPosition => ErrCode::search(
+                "invalid_search_parameter_show_matches_position",
+                StatusCode::BAD_REQUEST,
+            ),
+            InvalidSearchParameterFilter => {
+                ErrCode::search("invalid_search_parameter_filter", StatusCode::BAD_REQUEST)
+            }
+            InvalidSearchParameterSort => {
+                ErrCode::search("invalid_search_parameter_sort", StatusCode::BAD_REQUEST)
+            }
+            InvalidSearchParameterFacets => {
+                ErrCode::search("invalid_search_parameter_facets", StatusCode::BAD_REQUEST)
+            }
+            InvalidSearchParameterHighlightPreTag => ErrCode::search(
+                "invalid_search_parameter_highlight_pre_tag",
+                StatusCode::BAD_REQUEST,
+            ),
+            InvalidSearchParameterHighlightPostTag => ErrCode::search(
+                "invalid_search_parameter_highlight_post_tag",
+                StatusCode::BAD_REQUEST,
+            ),
+            InvalidSearchParameterCropMarker => {
+                ErrCode::search("invalid_search_parameter_crop_marker", StatusCode::BAD_REQUEST)
+            }
+            InvalidSearchParameterMatchingStrategy => ErrCode::search(
+                "invalid_search_parameter_matching_strategy",
+                StatusCode::BAD_REQUEST,
+            ),
         }
     }
 
@@ -366,6 +445,10 @@ impl ErrCode {
     }
 
     fn invalid(error_name: &'static str, status_code: StatusCode) -> ErrCode {
+        ErrCode { status_code, error_name, error_type: ErrorType::InvalidRequestError }
+    }
+
+    fn search(error_name: &'static str, status_code: StatusCode) -> ErrCode {
         ErrCode { status_code, error_name, error_type: ErrorType::InvalidRequestError }
     }
 }
@@ -434,18 +517,25 @@ impl ErrorCode for HeedError {
 }
 
 #[derive(Debug)]
-pub struct MeiliDeserError(String);
+pub struct MeiliDeserError {
+    error: String,
+    code: Code,
+}
 
 impl std::fmt::Display for MeiliDeserError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.error)
     }
 }
 
 impl std::error::Error for MeiliDeserError {}
 impl ErrorCode for MeiliDeserError {
     fn error_code(&self) -> Code {
-        Code::MalformedPayload
+        self.code
+    }
+
+    fn error_type(&self) -> String {
+        String::from("query_parameter_error")
     }
 }
 
@@ -465,68 +555,40 @@ impl deserr::DeserializeError for MeiliDeserError {
         error: deserr::ErrorKind<V>,
         location: ValuePointerRef,
     ) -> Result<Self, Self> {
-        let location = if location.is_origin() {
-            format!(".")
-        } else {
-            format!(" in `{}`.", location.to_owned())
+        let mut error: Self = deserr::serde_json::JsonError::error(None, error, location).into();
+
+        error.code = match location.last_field() {
+            Some("q") => Code::InvalidSearchParameterQ,
+            Some("offset") => Code::InvalidSearchParameterOffset,
+            Some("limit") => Code::InvalidSearchParameterLimit,
+            Some("page") => Code::InvalidSearchParameterPage,
+            Some("hitsPerPage") => Code::InvalidSearchParameterHitsPerPage,
+            Some("attributesToRetrieve") => Code::InvalidSearchParameterAttributesToRetrieve,
+            Some("attributesToCrop") => Code::InvalidSearchParameterAttributesToCrop,
+            Some("cropLength") => Code::InvalidSearchParameterCropLength,
+            Some("attributesToHighlight") => Code::InvalidSearchParameterAttributesToHighlight,
+            Some("showMatchesPosition") => Code::InvalidSearchParameterShowMatchesPosition,
+            Some("filter") => Code::InvalidSearchParameterFilter,
+            Some("sort") => Code::InvalidSearchParameterSort,
+            Some("facets") => Code::InvalidSearchParameterFacets,
+            Some("highlightPreTag") => Code::InvalidSearchParameterHighlightPreTag,
+            Some("highlightPostTag") => Code::InvalidSearchParameterHighlightPostTag,
+            Some("cropMarker") => Code::InvalidSearchParameterCropMarker,
+            Some("matchingStrategy") => Code::InvalidSearchParameterMatchingStrategy,
+            _ => Code::BadRequest,
         };
 
+        Err(error)
+    }
+}
+
+impl From<Result<deserr::serde_json::JsonError, deserr::serde_json::JsonError>>
+    for MeiliDeserError
+{
+    fn from(error: Result<deserr::serde_json::JsonError, deserr::serde_json::JsonError>) -> Self {
         match error {
-            deserr::ErrorKind::IncorrectValueKind { actual, accepted } => {
-                let expected = match accepted.len() {
-                    0 => format!(""),
-                    1 => format!(", expected a {}", accepted[0]),
-                    _ => format!(
-                        ", expected one of {}",
-                        accepted
-                            .iter()
-                            .map(|accepted| accepted.to_string())
-                            .collect::<Vec<String>>()
-                            .join(", ")
-                    ),
-                };
-
-                let kind = actual.kind();
-                // if we're not able to get the value as a string then we print nothing.
-                let received = match serde_json::to_string(&serde_json::Value::from(actual)) {
-                    Ok(value) => format!("`{}`", value),
-                    Err(_) => String::new(),
-                };
-
-                let format = format!(
-                    "Json deserialize error: invalid type: {kind} {received}{expected}{location}",
-                );
-                Err(MeiliDeserError(format))
-            }
-            deserr::ErrorKind::MissingField { field } => {
-                // serde_json original message:
-                // Json deserialize error: missing field `lol` at line 1 column 2
-
-                Err(MeiliDeserError(format!(
-                    "Json deserialize error: missing field `{field}`{location}"
-                )))
-            }
-            deserr::ErrorKind::UnknownKey { key, accepted } => {
-                let format = format!(
-                    "Json deserialize error: unknown field `{}`, expected one of {}{}",
-                    key,
-                    accepted
-                        .iter()
-                        .map(|accepted| format!("`{}`", accepted))
-                        .collect::<Vec<String>>()
-                        .join(", "),
-                    location
-                );
-
-                Err(MeiliDeserError(format))
-            }
-            deserr::ErrorKind::Unexpected { msg } => {
-                // serde_json original message:
-                // The json payload provided is malformed. `trailing characters at line 1 column 19`.
-                Err(MeiliDeserError(format!(
-                    "The json payload provided is malformed: {msg}{location}"
-                )))
-            }
+            Ok(error) => MeiliDeserError { error: error.0, code: Code::BadRequest },
+            Err(error) => MeiliDeserError { error: error.0, code: Code::BadRequest },
         }
     }
 }
