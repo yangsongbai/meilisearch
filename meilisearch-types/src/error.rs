@@ -449,16 +449,6 @@ impl ErrorCode for MeiliDeserError {
     }
 }
 
-impl deserr::MergeWithError<Infallible> for MeiliDeserError {
-    fn merge(
-        _self_: Option<Self>,
-        _other: Infallible,
-        _merge_location: deserr::ValuePointerRef,
-    ) -> Result<Self, Self> {
-        unreachable!()
-    }
-}
-
 impl deserr::MergeWithError<MeiliDeserError> for MeiliDeserError {
     fn merge(
         _self_: Option<Self>,
