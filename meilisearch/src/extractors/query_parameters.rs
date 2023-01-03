@@ -1,7 +1,6 @@
 //! For query parameter extractor documentation, see [`Query`].
 
 use std::marker::PhantomData;
-use std::sync::Arc;
 use std::{fmt, ops};
 
 use actix_http::Payload;
@@ -9,7 +8,6 @@ use actix_utils::future::{err, ok, Ready};
 use actix_web::{FromRequest, HttpRequest};
 use deserr::{DeserializeError, DeserializeFromValue};
 use meilisearch_types::error::{Code, ErrorCode, ResponseError};
-use serde::de::DeserializeOwned;
 
 /// Extract typed information from the request's query.
 ///
