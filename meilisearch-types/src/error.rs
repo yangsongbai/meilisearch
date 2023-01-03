@@ -447,7 +447,7 @@ impl ErrCode {
     }
 
     fn search(error_name: &'static str, status_code: StatusCode) -> ErrCode {
-        ErrCode { status_code, error_name, error_type: ErrorType::InvalidRequestError }
+        ErrCode { status_code, error_name, error_type: ErrorType::Search }
     }
 }
 
