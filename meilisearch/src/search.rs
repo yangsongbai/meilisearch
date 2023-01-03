@@ -1,9 +1,12 @@
 use std::cmp::min;
 use std::collections::{BTreeMap, BTreeSet, HashSet};
+use std::fmt;
 use std::str::FromStr;
 use std::time::Instant;
 
+use deserr::{IntoValue, ValuePointerRef};
 use either::Either;
+use meilisearch_types::error::{unwrap_any, Code, ErrorCode};
 use meilisearch_types::settings::DEFAULT_PAGINATION_MAX_TOTAL_HITS;
 use meilisearch_types::{milli, Document};
 use milli::tokenizer::TokenizerBuilder;
@@ -27,42 +30,32 @@ pub const DEFAULT_HIGHLIGHT_PRE_TAG: fn() -> String = || "<em>".to_string();
 pub const DEFAULT_HIGHLIGHT_POST_TAG: fn() -> String = || "</em>".to_string();
 
 #[derive(Debug, Clone, Default, Deserialize, PartialEq, deserr::DeserializeFromValue)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[deserr(rename_all = camelCase, deny_unknown_fields)]
 pub struct SearchQuery {
     pub q: Option<String>,
-    #[serde(default = "DEFAULT_SEARCH_OFFSET")]
     #[deserr(default = DEFAULT_SEARCH_OFFSET())]
     pub offset: usize,
-    #[serde(default = "DEFAULT_SEARCH_LIMIT")]
     #[deserr(default = DEFAULT_SEARCH_LIMIT())]
     pub limit: usize,
     pub page: Option<usize>,
     pub hits_per_page: Option<usize>,
     pub attributes_to_retrieve: Option<BTreeSet<String>>,
     pub attributes_to_crop: Option<Vec<String>>,
-    #[serde(default = "DEFAULT_CROP_LENGTH")]
     #[deserr(default = DEFAULT_CROP_LENGTH())]
     pub crop_length: usize,
     pub attributes_to_highlight: Option<HashSet<String>>,
-    // Default to false
-    #[serde(default = "Default::default")]
-    #[deserr(default = Default::default())]
+    #[deserr(default)]
     pub show_matches_position: bool,
     pub filter: Option<Value>,
     pub sort: Option<Vec<String>>,
     pub facets: Option<Vec<String>>,
-    #[serde(default = "DEFAULT_HIGHLIGHT_PRE_TAG")]
     #[deserr(default = DEFAULT_HIGHLIGHT_PRE_TAG())]
     pub highlight_pre_tag: String,
-    #[serde(default = "DEFAULT_HIGHLIGHT_POST_TAG")]
     #[deserr(default = DEFAULT_HIGHLIGHT_POST_TAG())]
     pub highlight_post_tag: String,
-    #[serde(default = "DEFAULT_CROP_MARKER")]
     #[deserr(default = DEFAULT_CROP_MARKER())]
     pub crop_marker: String,
-    #[serde(default)]
-    #[deserr(default = Default::default())]
+    #[deserr(default)]
     pub matching_strategy: MatchingStrategy,
 }
 
@@ -94,6 +87,68 @@ impl From<MatchingStrategy> for TermsMatchingStrategy {
             MatchingStrategy::Last => Self::Last,
             MatchingStrategy::All => Self::All,
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct SearchDeserError {
+    error: String,
+    code: Code,
+}
+
+impl std::fmt::Display for SearchDeserError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.error)
+    }
+}
+
+impl std::error::Error for SearchDeserError {}
+impl ErrorCode for SearchDeserError {
+    fn error_code(&self) -> Code {
+        self.code
+    }
+}
+
+impl deserr::MergeWithError<SearchDeserError> for SearchDeserError {
+    fn merge(
+        _self_: Option<Self>,
+        other: SearchDeserError,
+        _merge_location: ValuePointerRef,
+    ) -> Result<Self, Self> {
+        Err(other)
+    }
+}
+
+impl deserr::DeserializeError for SearchDeserError {
+    fn error<V: IntoValue>(
+        _self_: Option<Self>,
+        error: deserr::ErrorKind<V>,
+        location: ValuePointerRef,
+    ) -> Result<Self, Self> {
+        let error = unwrap_any(deserr::serde_json::JsonError::error(None, error, location)).0;
+
+        let code = match location.last_field() {
+            Some("q") => Code::InvalidSearchParameterQ,
+            Some("offset") => Code::InvalidSearchParameterOffset,
+            Some("limit") => Code::InvalidSearchParameterLimit,
+            Some("page") => Code::InvalidSearchParameterPage,
+            Some("hitsPerPage") => Code::InvalidSearchParameterHitsPerPage,
+            Some("attributesToRetrieve") => Code::InvalidSearchParameterAttributesToRetrieve,
+            Some("attributesToCrop") => Code::InvalidSearchParameterAttributesToCrop,
+            Some("cropLength") => Code::InvalidSearchParameterCropLength,
+            Some("attributesToHighlight") => Code::InvalidSearchParameterAttributesToHighlight,
+            Some("showMatchesPosition") => Code::InvalidSearchParameterShowMatchesPosition,
+            Some("filter") => Code::InvalidSearchParameterFilter,
+            Some("sort") => Code::InvalidSearchParameterSort,
+            Some("facets") => Code::InvalidSearchParameterFacets,
+            Some("highlightPreTag") => Code::InvalidSearchParameterHighlightPreTag,
+            Some("highlightPostTag") => Code::InvalidSearchParameterHighlightPostTag,
+            Some("cropMarker") => Code::InvalidSearchParameterCropMarker,
+            Some("matchingStrategy") => Code::InvalidSearchParameterMatchingStrategy,
+            _ => Code::BadRequest,
+        };
+
+        Err(SearchDeserError { error, code })
     }
 }
 

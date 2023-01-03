@@ -516,80 +516,10 @@ impl ErrorCode for HeedError {
     }
 }
 
-#[derive(Debug)]
-pub struct MeiliDeserError {
-    error: String,
-    code: Code,
-}
-
-impl std::fmt::Display for MeiliDeserError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.error)
-    }
-}
-
-impl std::error::Error for MeiliDeserError {}
-impl ErrorCode for MeiliDeserError {
-    fn error_code(&self) -> Code {
-        self.code
-    }
-
-    fn error_type(&self) -> String {
-        String::from("query_parameter_error")
-    }
-}
-
-impl deserr::MergeWithError<MeiliDeserError> for MeiliDeserError {
-    fn merge(
-        _self_: Option<Self>,
-        other: MeiliDeserError,
-        _merge_location: ValuePointerRef,
-    ) -> Result<Self, Self> {
-        Err(other)
-    }
-}
-
-impl deserr::DeserializeError for MeiliDeserError {
-    fn error<V: IntoValue>(
-        _self_: Option<Self>,
-        error: deserr::ErrorKind<V>,
-        location: ValuePointerRef,
-    ) -> Result<Self, Self> {
-        let mut error: Self = deserr::serde_json::JsonError::error(None, error, location).into();
-
-        error.code = match location.last_field() {
-            Some("q") => Code::InvalidSearchParameterQ,
-            Some("offset") => Code::InvalidSearchParameterOffset,
-            Some("limit") => Code::InvalidSearchParameterLimit,
-            Some("page") => Code::InvalidSearchParameterPage,
-            Some("hitsPerPage") => Code::InvalidSearchParameterHitsPerPage,
-            Some("attributesToRetrieve") => Code::InvalidSearchParameterAttributesToRetrieve,
-            Some("attributesToCrop") => Code::InvalidSearchParameterAttributesToCrop,
-            Some("cropLength") => Code::InvalidSearchParameterCropLength,
-            Some("attributesToHighlight") => Code::InvalidSearchParameterAttributesToHighlight,
-            Some("showMatchesPosition") => Code::InvalidSearchParameterShowMatchesPosition,
-            Some("filter") => Code::InvalidSearchParameterFilter,
-            Some("sort") => Code::InvalidSearchParameterSort,
-            Some("facets") => Code::InvalidSearchParameterFacets,
-            Some("highlightPreTag") => Code::InvalidSearchParameterHighlightPreTag,
-            Some("highlightPostTag") => Code::InvalidSearchParameterHighlightPostTag,
-            Some("cropMarker") => Code::InvalidSearchParameterCropMarker,
-            Some("matchingStrategy") => Code::InvalidSearchParameterMatchingStrategy,
-            _ => Code::BadRequest,
-        };
-
-        Err(error)
-    }
-}
-
-impl From<Result<deserr::serde_json::JsonError, deserr::serde_json::JsonError>>
-    for MeiliDeserError
-{
-    fn from(error: Result<deserr::serde_json::JsonError, deserr::serde_json::JsonError>) -> Self {
-        match error {
-            Ok(error) => MeiliDeserError { error: error.0, code: Code::BadRequest },
-            Err(error) => MeiliDeserError { error: error.0, code: Code::BadRequest },
-        }
+pub fn unwrap_any<T>(any: Result<T, T>) -> T {
+    match any {
+        Ok(any) => any,
+        Err(any) => any,
     }
 }
 
