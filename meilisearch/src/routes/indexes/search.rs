@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use actix_web::web::Data;
 use actix_web::{web, HttpRequest, HttpResponse};
 use index_scheduler::IndexScheduler;
@@ -14,6 +16,7 @@ use crate::extractors::authentication::GuardedData;
 use crate::extractors::json::ValidatedJson;
 use crate::extractors::query_parameters::QueryParameter;
 use crate::extractors::sequential_extractor::SeqHandler;
+use crate::routes::from_string_to_option;
 use crate::search::{
     perform_search, MatchingStrategy, SearchDeserError, SearchQuery, DEFAULT_CROP_LENGTH,
     DEFAULT_CROP_MARKER, DEFAULT_HIGHLIGHT_POST_TAG, DEFAULT_HIGHLIGHT_PRE_TAG,
@@ -32,20 +35,22 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
 #[deserr(rename_all = camelCase, deny_unknown_fields)]
 pub struct SearchQueryGet {
     q: Option<String>,
-    #[deserr(default = DEFAULT_SEARCH_OFFSET())]
+    #[deserr(default = DEFAULT_SEARCH_OFFSET(), from(&String) = FromStr::from_str -> std::num::ParseIntError)]
     offset: usize,
-    #[deserr(default = DEFAULT_SEARCH_LIMIT())]
+    #[deserr(default = DEFAULT_SEARCH_LIMIT(), from(&String) = FromStr::from_str -> std::num::ParseIntError)]
     limit: usize,
+    #[deserr(from(&String) = from_string_to_option -> std::num::ParseIntError)]
     page: Option<usize>,
+    #[deserr(from(&String) = from_string_to_option -> std::num::ParseIntError)]
     hits_per_page: Option<usize>,
     attributes_to_retrieve: Option<CS<String>>,
     attributes_to_crop: Option<CS<String>>,
-    #[deserr(default = DEFAULT_CROP_LENGTH())]
+    #[deserr(default = DEFAULT_CROP_LENGTH(), from(&String) = FromStr::from_str -> std::num::ParseIntError)]
     crop_length: usize,
     attributes_to_highlight: Option<CS<String>>,
     filter: Option<String>,
     sort: Option<String>,
-    #[deserr(default)]
+    #[deserr(default, from(&String) = FromStr::from_str -> std::str::ParseBoolError)]
     show_matches_position: bool,
     facets: Option<CS<String>>,
     #[deserr(default = DEFAULT_HIGHLIGHT_PRE_TAG())]

@@ -1,7 +1,8 @@
 use std::cmp::min;
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::fmt;
-use std::str::FromStr;
+use std::num::ParseIntError;
+use std::str::{FromStr, ParseBoolError};
 use std::time::Instant;
 
 use deserr::{IntoValue, ValuePointerRef};
@@ -149,6 +150,18 @@ impl deserr::DeserializeError for SearchDeserError {
         };
 
         Err(SearchDeserError { error, code })
+    }
+}
+
+impl From<ParseBoolError> for SearchDeserError {
+    fn from(error: ParseBoolError) -> Self {
+        Self { error: error.to_string(), code: Code::BadRequest }
+    }
+}
+
+impl From<ParseIntError> for SearchDeserError {
+    fn from(error: ParseIntError) -> Self {
+        Self { error: error.to_string(), code: Code::BadRequest }
     }
 }
 

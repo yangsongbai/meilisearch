@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::str::FromStr;
 
 use actix_web::web::Data;
 use actix_web::{web, HttpRequest, HttpResponse};
@@ -47,6 +48,13 @@ where
             StarOr::Other(val) => Some(val),
         })
         .collect()
+}
+
+pub fn from_string_to_option<T, E>(input: &str) -> Result<Option<T>, E>
+where
+    T: FromStr<Err = E>,
+{
+    Ok(Some(input.parse()?))
 }
 
 const PAGINATION_DEFAULT_LIMIT: fn() -> usize = || 20;
