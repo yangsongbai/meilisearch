@@ -134,6 +134,9 @@ pub enum Code {
     Filter,
     Sort,
 
+    // Invalid swap-indexes
+    InvalidSwapIndexes,
+
     // Invalid search request
     InvalidSearchParameterQ,
     InvalidSearchParameterOffset,
@@ -342,6 +345,9 @@ impl Code {
             DuplicateIndexFound => {
                 ErrCode::invalid("duplicate_index_found", StatusCode::BAD_REQUEST)
             }
+
+            InvalidSwapIndexes => ErrCode::invalid("invalid_swap_indexes", StatusCode::BAD_REQUEST),
+
             InvalidSearchParameterQ => {
                 ErrCode::invalid("invalid_search_parameter_q", StatusCode::BAD_REQUEST)
             }
