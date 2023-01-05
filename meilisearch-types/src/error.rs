@@ -137,6 +137,19 @@ pub enum Code {
     // Invalid swap-indexes
     InvalidSwapIndexes,
 
+    // Invalid settings update request
+    InvalidSettingsDisplayedAttributes,
+    InvalidSettingsSearchableAttributes,
+    InvalidSettingsFilterableAttributes,
+    InvalidSettingsSortableAttributes,
+    InvalidSettingsRankingRules,
+    InvalidSettingsStopWords,
+    InvalidSettingsSynonyms,
+    InvalidSettingsDistinctAttribute,
+    InvalidSettingsTypoTolerance,
+    InvalidSettingsFaceting,
+    InvalidSettingsPagination,
+
     // Invalid search request
     InvalidSearchQ,
     InvalidSearchOffset,
@@ -347,6 +360,40 @@ impl Code {
             }
 
             InvalidSwapIndexes => ErrCode::invalid("invalid_swap_indexes", StatusCode::BAD_REQUEST),
+
+            InvalidSettingsDisplayedAttributes => {
+                ErrCode::invalid("invalid_settings_displayed_attributes", StatusCode::BAD_REQUEST)
+            }
+            InvalidSettingsSearchableAttributes => {
+                ErrCode::invalid("invalid_settings_searchable_attributes", StatusCode::BAD_REQUEST)
+            }
+            InvalidSettingsFilterableAttributes => {
+                ErrCode::invalid("invalid_settings_filterable_attributes", StatusCode::BAD_REQUEST)
+            }
+            InvalidSettingsSortableAttributes => {
+                ErrCode::invalid("invalid_settings_sortable_attributes", StatusCode::BAD_REQUEST)
+            }
+            InvalidSettingsRankingRules => {
+                ErrCode::invalid("invalid_settings_ranking_rules", StatusCode::BAD_REQUEST)
+            }
+            InvalidSettingsStopWords => {
+                ErrCode::invalid("invalid_settings_stop_words", StatusCode::BAD_REQUEST)
+            }
+            InvalidSettingsSynonyms => {
+                ErrCode::invalid("invalid_settings_synonyms", StatusCode::BAD_REQUEST)
+            }
+            InvalidSettingsDistinctAttribute => {
+                ErrCode::invalid("invalid_settings_distinct_attribute", StatusCode::BAD_REQUEST)
+            }
+            InvalidSettingsTypoTolerance => {
+                ErrCode::invalid("invalid_settings_typo_tolerance", StatusCode::BAD_REQUEST)
+            }
+            InvalidSettingsFaceting => {
+                ErrCode::invalid("invalid_settings_faceting", StatusCode::BAD_REQUEST)
+            }
+            InvalidSettingsPagination => {
+                ErrCode::invalid("invalid_settings_pagination", StatusCode::BAD_REQUEST)
+            }
 
             InvalidSearchQ => ErrCode::invalid("invalid_search_q", StatusCode::BAD_REQUEST),
             InvalidSearchOffset => {
