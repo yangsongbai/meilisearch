@@ -5,7 +5,7 @@ use std::num::ParseIntError;
 use std::str::{FromStr, ParseBoolError};
 use std::time::Instant;
 
-use deserr::{IntoValue, ValuePointerRef};
+use deserr::{DeserializeFromValue, IntoValue, ValuePointerRef};
 use either::Either;
 use meilisearch_types::error::{unwrap_any, Code, ErrorCode};
 use meilisearch_types::settings::DEFAULT_PAGINATION_MAX_TOTAL_HITS;
@@ -30,7 +30,7 @@ pub const DEFAULT_CROP_MARKER: fn() -> String = || "…".to_string();
 pub const DEFAULT_HIGHLIGHT_PRE_TAG: fn() -> String = || "<em>".to_string();
 pub const DEFAULT_HIGHLIGHT_POST_TAG: fn() -> String = || "</em>".to_string();
 
-#[derive(Debug, Clone, Default, Deserialize, PartialEq, deserr::DeserializeFromValue)]
+#[derive(Debug, Clone, Default, PartialEq, DeserializeFromValue)]
 #[deserr(rename_all = camelCase, deny_unknown_fields)]
 pub struct SearchQuery {
     pub q: Option<String>,
@@ -66,7 +66,7 @@ impl SearchQuery {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, PartialEq, Eq, deserr::DeserializeFromValue)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq, DeserializeFromValue)]
 #[deserr(rename_all = camelCase)]
 #[serde(rename_all = "camelCase")]
 pub enum MatchingStrategy {

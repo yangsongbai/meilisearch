@@ -6,7 +6,6 @@ use index_scheduler::IndexScheduler;
 use log::debug;
 use meilisearch_auth::IndexSearchRules;
 use meilisearch_types::error::ResponseError;
-use serde::Deserialize;
 use serde_cs::vec::CS;
 use serde_json::Value;
 
@@ -31,7 +30,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     );
 }
 
-#[derive(Deserialize, Debug, deserr::DeserializeFromValue)]
+#[derive(Debug, deserr::DeserializeFromValue)]
 #[deserr(rename_all = camelCase, deny_unknown_fields)]
 pub struct SearchQueryGet {
     q: Option<String>,
