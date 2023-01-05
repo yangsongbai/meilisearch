@@ -47,7 +47,7 @@ async fn search_invalid_crop_marker() {
     (
         Object {
             "message": String("invalid type: Map `{\"marker\":\"<crop>\"}`, expected a String at `.cropMarker`."),
-            "code": String("invalid_search_parameter_crop_marker"),
+            "code": String("invalid_search_crop_marker"),
             "type": String("invalid_request"),
             "link": String("https://docs.meilisearch.com/errors#invalid_search_parameter_crop_marker"),
         },
@@ -61,7 +61,7 @@ async fn search_invalid_crop_marker() {
     (
         Object {
             "message": String("invalid type: Sequence `[\"marker\",\"<crop>\"]`, expected a String at `.cropMarker`."),
-            "code": String("invalid_search_parameter_crop_marker"),
+            "code": String("invalid_search_crop_marker"),
             "type": String("invalid_request"),
             "link": String("https://docs.meilisearch.com/errors#invalid_search_parameter_crop_marker"),
         },
@@ -81,7 +81,7 @@ async fn search_invalid_highlight_pre_tag() {
     (
         Object {
             "message": String("invalid type: Map `{\"marker\":\"<em>\"}`, expected a String at `.highlightPreTag`."),
-            "code": String("invalid_search_parameter_highlight_pre_tag"),
+            "code": String("invalid_search_highlight_pre_tag"),
             "type": String("invalid_request"),
             "link": String("https://docs.meilisearch.com/errors#invalid_search_parameter_highlight_pre_tag"),
         },
@@ -95,7 +95,7 @@ async fn search_invalid_highlight_pre_tag() {
     (
         Object {
             "message": String("invalid type: Sequence `[\"marker\",\"<em>\"]`, expected a String at `.highlightPreTag`."),
-            "code": String("invalid_search_parameter_highlight_pre_tag"),
+            "code": String("invalid_search_highlight_pre_tag"),
             "type": String("invalid_request"),
             "link": String("https://docs.meilisearch.com/errors#invalid_search_parameter_highlight_pre_tag"),
         },
@@ -115,7 +115,7 @@ async fn search_invalid_highlight_post_tag() {
     (
         Object {
             "message": String("invalid type: Map `{\"marker\":\"</em>\"}`, expected a String at `.highlightPostTag`."),
-            "code": String("invalid_search_parameter_highlight_post_tag"),
+            "code": String("invalid_search_highlight_post_tag"),
             "type": String("invalid_request"),
             "link": String("https://docs.meilisearch.com/errors#invalid_search_parameter_highlight_post_tag"),
         },
@@ -129,7 +129,7 @@ async fn search_invalid_highlight_post_tag() {
     (
         Object {
             "message": String("invalid type: Sequence `[\"marker\",\"</em>\"]`, expected a String at `.highlightPostTag`."),
-            "code": String("invalid_search_parameter_highlight_post_tag"),
+            "code": String("invalid_search_highlight_post_tag"),
             "type": String("invalid_request"),
             "link": String("https://docs.meilisearch.com/errors#invalid_search_parameter_highlight_post_tag"),
         },

@@ -138,23 +138,23 @@ pub enum Code {
     InvalidSwapIndexes,
 
     // Invalid search request
-    InvalidSearchParameterQ,
-    InvalidSearchParameterOffset,
-    InvalidSearchParameterLimit,
-    InvalidSearchParameterPage,
-    InvalidSearchParameterHitsPerPage,
-    InvalidSearchParameterAttributesToRetrieve,
-    InvalidSearchParameterAttributesToCrop,
-    InvalidSearchParameterCropLength,
-    InvalidSearchParameterAttributesToHighlight,
-    InvalidSearchParameterShowMatchesPosition,
-    InvalidSearchParameterFilter,
-    InvalidSearchParameterSort,
-    InvalidSearchParameterFacets,
-    InvalidSearchParameterHighlightPreTag,
-    InvalidSearchParameterHighlightPostTag,
-    InvalidSearchParameterCropMarker,
-    InvalidSearchParameterMatchingStrategy,
+    InvalidSearchQ,
+    InvalidSearchOffset,
+    InvalidSearchLimit,
+    InvalidSearchPage,
+    InvalidSearchHitsPerPage,
+    InvalidSearchAttributesToRetrieve,
+    InvalidSearchAttributesToCrop,
+    InvalidSearchCropLength,
+    InvalidSearchAttributesToHighlight,
+    InvalidSearchShowMatchesPosition,
+    InvalidSearchFilter,
+    InvalidSearchSort,
+    InvalidSearchFacets,
+    InvalidSearchHighlightPreTag,
+    InvalidSearchHighlightPostTag,
+    InvalidSearchCropMarker,
+    InvalidSearchMatchingStrategy,
 
     BadParameter,
     BadRequest,
@@ -348,64 +348,49 @@ impl Code {
 
             InvalidSwapIndexes => ErrCode::invalid("invalid_swap_indexes", StatusCode::BAD_REQUEST),
 
-            InvalidSearchParameterQ => {
-                ErrCode::invalid("invalid_search_parameter_q", StatusCode::BAD_REQUEST)
+            InvalidSearchQ => ErrCode::invalid("invalid_search_q", StatusCode::BAD_REQUEST),
+            InvalidSearchOffset => {
+                ErrCode::invalid("invalid_search_offset", StatusCode::BAD_REQUEST)
             }
-            InvalidSearchParameterOffset => {
-                ErrCode::invalid("invalid_search_parameter_offset", StatusCode::BAD_REQUEST)
+            InvalidSearchLimit => ErrCode::invalid("invalid_search_limit", StatusCode::BAD_REQUEST),
+            InvalidSearchPage => ErrCode::invalid("invalid_search_page", StatusCode::BAD_REQUEST),
+            InvalidSearchHitsPerPage => {
+                ErrCode::invalid("invalid_search_hits_per_page", StatusCode::BAD_REQUEST)
             }
-            InvalidSearchParameterLimit => {
-                ErrCode::invalid("invalid_search_parameter_limit", StatusCode::BAD_REQUEST)
+            InvalidSearchAttributesToRetrieve => {
+                ErrCode::invalid("invalid_search_attributes_to_retrieve", StatusCode::BAD_REQUEST)
             }
-            InvalidSearchParameterPage => {
-                ErrCode::invalid("invalid_search_parameter_page", StatusCode::BAD_REQUEST)
+            InvalidSearchAttributesToCrop => {
+                ErrCode::invalid("invalid_search_attributes_to_crop", StatusCode::BAD_REQUEST)
             }
-            InvalidSearchParameterHitsPerPage => {
-                ErrCode::invalid("invalid_search_parameter_hits_per_page", StatusCode::BAD_REQUEST)
+            InvalidSearchCropLength => {
+                ErrCode::invalid("invalid_search_crop_length", StatusCode::BAD_REQUEST)
             }
-            InvalidSearchParameterAttributesToRetrieve => ErrCode::invalid(
-                "invalid_search_parameter_attributes_to_retrieve",
-                StatusCode::BAD_REQUEST,
-            ),
-            InvalidSearchParameterAttributesToCrop => ErrCode::invalid(
-                "invalid_search_parameter_attributes_to_crop",
-                StatusCode::BAD_REQUEST,
-            ),
-            InvalidSearchParameterCropLength => {
-                ErrCode::invalid("invalid_search_parameter_crop_length", StatusCode::BAD_REQUEST)
+            InvalidSearchAttributesToHighlight => {
+                ErrCode::invalid("invalid_search_attributes_to_highlight", StatusCode::BAD_REQUEST)
             }
-            InvalidSearchParameterAttributesToHighlight => ErrCode::invalid(
-                "invalid_search_parameter_attributes_to_highlight",
-                StatusCode::BAD_REQUEST,
-            ),
-            InvalidSearchParameterShowMatchesPosition => ErrCode::invalid(
-                "invalid_search_parameter_show_matches_position",
-                StatusCode::BAD_REQUEST,
-            ),
-            InvalidSearchParameterFilter => {
-                ErrCode::invalid("invalid_search_parameter_filter", StatusCode::BAD_REQUEST)
+            InvalidSearchShowMatchesPosition => {
+                ErrCode::invalid("invalid_search_show_matches_position", StatusCode::BAD_REQUEST)
             }
-            InvalidSearchParameterSort => {
-                ErrCode::invalid("invalid_search_parameter_sort", StatusCode::BAD_REQUEST)
+            InvalidSearchFilter => {
+                ErrCode::invalid("invalid_search_filter", StatusCode::BAD_REQUEST)
             }
-            InvalidSearchParameterFacets => {
-                ErrCode::invalid("invalid_search_parameter_facets", StatusCode::BAD_REQUEST)
+            InvalidSearchSort => ErrCode::invalid("invalid_search_sort", StatusCode::BAD_REQUEST),
+            InvalidSearchFacets => {
+                ErrCode::invalid("invalid_search_facets", StatusCode::BAD_REQUEST)
             }
-            InvalidSearchParameterHighlightPreTag => ErrCode::invalid(
-                "invalid_search_parameter_highlight_pre_tag",
-                StatusCode::BAD_REQUEST,
-            ),
-            InvalidSearchParameterHighlightPostTag => ErrCode::invalid(
-                "invalid_search_parameter_highlight_post_tag",
-                StatusCode::BAD_REQUEST,
-            ),
-            InvalidSearchParameterCropMarker => {
-                ErrCode::invalid("invalid_search_parameter_crop_marker", StatusCode::BAD_REQUEST)
+            InvalidSearchHighlightPreTag => {
+                ErrCode::invalid("invalid_search_highlight_pre_tag", StatusCode::BAD_REQUEST)
             }
-            InvalidSearchParameterMatchingStrategy => ErrCode::invalid(
-                "invalid_search_parameter_matching_strategy",
-                StatusCode::BAD_REQUEST,
-            ),
+            InvalidSearchHighlightPostTag => {
+                ErrCode::invalid("invalid_search_highlight_post_tag", StatusCode::BAD_REQUEST)
+            }
+            InvalidSearchCropMarker => {
+                ErrCode::invalid("invalid_search_crop_marker", StatusCode::BAD_REQUEST)
+            }
+            InvalidSearchMatchingStrategy => {
+                ErrCode::invalid("invalid_search_matching_strategy", StatusCode::BAD_REQUEST)
+            }
         }
     }
 
