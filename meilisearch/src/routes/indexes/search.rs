@@ -174,7 +174,6 @@ pub async fn search_with_url_query(
 pub async fn search_with_post(
     index_scheduler: GuardedData<ActionPolicy<{ actions::SEARCH }>, Data<IndexScheduler>>,
     index_uid: web::Path<String>,
-    // params: web::Json<SearchQuery>,
     params: ValidatedJson<SearchQuery, SearchDeserError>,
     req: HttpRequest,
     analytics: web::Data<dyn Analytics>,
