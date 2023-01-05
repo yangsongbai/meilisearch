@@ -477,7 +477,7 @@ impl deserr::DeserializeError for SettingsDeserrError {
             Some("typoTolerance") => Code::InvalidSettingsTypoTolerance,
             Some("faceting") => Code::InvalidSettingsFaceting,
             Some("pagination") => Code::InvalidSettingsPagination,
-            field => Code::BadRequest,
+            _ => Code::BadRequest,
         };
 
         Err(SettingsDeserrError { error, code })
