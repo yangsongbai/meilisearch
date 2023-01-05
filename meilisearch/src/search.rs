@@ -1,11 +1,14 @@
 use std::cmp::min;
 use std::collections::{BTreeMap, BTreeSet, HashSet};
+use std::convert::Infallible;
 use std::fmt;
 use std::num::ParseIntError;
 use std::str::{FromStr, ParseBoolError};
 use std::time::Instant;
 
-use deserr::{DeserializeFromValue, IntoValue, ValuePointerRef};
+use deserr::{
+    DeserializeError, DeserializeFromValue, ErrorKind, IntoValue, MergeWithError, ValuePointerRef,
+};
 use either::Either;
 use meilisearch_types::error::{unwrap_any, Code, ErrorCode};
 use meilisearch_types::settings::DEFAULT_PAGINATION_MAX_TOTAL_HITS;
@@ -110,7 +113,7 @@ impl ErrorCode for SearchDeserError {
     }
 }
 
-impl deserr::MergeWithError<SearchDeserError> for SearchDeserError {
+impl MergeWithError<SearchDeserError> for SearchDeserError {
     fn merge(
         _self_: Option<Self>,
         other: SearchDeserError,
@@ -120,10 +123,10 @@ impl deserr::MergeWithError<SearchDeserError> for SearchDeserError {
     }
 }
 
-impl deserr::DeserializeError for SearchDeserError {
+impl DeserializeError for SearchDeserError {
     fn error<V: IntoValue>(
         _self_: Option<Self>,
-        error: deserr::ErrorKind<V>,
+        error: ErrorKind<V>,
         location: ValuePointerRef,
     ) -> Result<Self, Self> {
         let error = unwrap_any(deserr::serde_json::JsonError::error(None, error, location)).0;
@@ -153,15 +156,31 @@ impl deserr::DeserializeError for SearchDeserError {
     }
 }
 
-impl From<ParseBoolError> for SearchDeserError {
-    fn from(error: ParseBoolError) -> Self {
-        Self { error: error.to_string(), code: Code::BadRequest }
+impl MergeWithError<ParseBoolError> for SearchDeserError {
+    fn merge(
+        _self_: Option<Self>,
+        other: ParseBoolError,
+        merge_location: ValuePointerRef,
+    ) -> Result<Self, Self> {
+        SearchDeserError::error::<Infallible>(
+            None,
+            ErrorKind::Unexpected { msg: other.to_string() },
+            merge_location,
+        )
     }
 }
 
-impl From<ParseIntError> for SearchDeserError {
-    fn from(error: ParseIntError) -> Self {
-        Self { error: error.to_string(), code: Code::BadRequest }
+impl MergeWithError<ParseIntError> for SearchDeserError {
+    fn merge(
+        _self_: Option<Self>,
+        other: ParseIntError,
+        merge_location: ValuePointerRef,
+    ) -> Result<Self, Self> {
+        SearchDeserError::error::<Infallible>(
+            None,
+            ErrorKind::Unexpected { msg: other.to_string() },
+            merge_location,
+        )
     }
 }
 
