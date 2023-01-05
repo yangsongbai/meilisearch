@@ -465,8 +465,7 @@ impl deserr::DeserializeError for SettingsDeserrError {
     ) -> Result<Self, Self> {
         let error = unwrap_any(deserr::serde_json::JsonError::error(None, error, location)).0;
 
-        // TODO: change to first_field
-        let code = match location.last_field() {
+        let code = match location.first_field() {
             Some("displayedAttributes") => Code::InvalidSettingsDisplayedAttributes,
             Some("searchableAttributes") => Code::InvalidSettingsSearchableAttributes,
             Some("filterableAttributes") => Code::InvalidSettingsFilterableAttributes,
@@ -478,7 +477,7 @@ impl deserr::DeserializeError for SettingsDeserrError {
             Some("typoTolerance") => Code::InvalidSettingsTypoTolerance,
             Some("faceting") => Code::InvalidSettingsFaceting,
             Some("pagination") => Code::InvalidSettingsPagination,
-            _ => Code::BadRequest,
+            field => Code::BadRequest,
         };
 
         Err(SettingsDeserrError { error, code })
