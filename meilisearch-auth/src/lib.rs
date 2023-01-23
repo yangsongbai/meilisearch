@@ -3,12 +3,12 @@ pub mod error;
 mod store;
 
 use std::collections::{HashMap, HashSet};
-use std::ops::Deref;
 use std::path::Path;
 use std::sync::Arc;
 
 use error::{AuthControllerError, Result};
 use meilisearch_types::keys::{Action, CreateApiKey, Key, PatchApiKey};
+use meilisearch_types::milli::update::Setting;
 use meilisearch_types::star_or::StarOr;
 use serde::{Deserialize, Serialize};
 pub use store::open_auth_store_env;
@@ -42,8 +42,14 @@ impl AuthController {
 
     pub fn update_key(&self, uid: Uuid, patch: PatchApiKey) -> Result<Key> {
         let mut key = self.get_key(uid)?;
-        key.description = patch.description;
-        key.name = patch.name;
+        match patch.description {
+            Setting::NotSet => (),
+            description => key.description = description.set(),
+        };
+        match patch.name {
+            Setting::NotSet => (),
+            name => key.name = name.set(),
+        };
         key.updated_at = OffsetDateTime::now_utc();
         self.store.put_api_key(key)
     }
@@ -86,15 +92,13 @@ impl AuthController {
                     key.indexes
                         .into_iter()
                         .filter_map(|index| {
-                            search_rules.get_index_search_rules(index.deref()).map(
-                                |index_search_rules| {
-                                    (String::from(index), Some(index_search_rules))
-                                },
+                            search_rules.get_index_search_rules(&format!("{index}")).map(
+                                |index_search_rules| (index.to_string(), Some(index_search_rules)),
                             )
                         })
                         .collect(),
                 ),
-                None => SearchRules::Set(key.indexes.into_iter().map(String::from).collect()),
+                None => SearchRules::Set(key.indexes.into_iter().map(|x| x.to_string()).collect()),
             };
         } else if let Some(search_rules) = search_rules {
             filters.search_rules = search_rules;

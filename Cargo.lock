@@ -1119,9 +1119,9 @@ dependencies = [
 
 [[package]]
 name = "deserr"
-version = "0.1.4"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86290491a2b5c21a1a5083da8dae831006761258fabd5617309c3eebc5f89468"
+checksum = "a08292c726dfbc0c943ea5f34757d716b8d39e3191b8e0953f7e5e72af9f0b28"
 dependencies = [
  "deserr-internal",
  "serde-cs",
@@ -1130,9 +1130,9 @@ dependencies = [
 
 [[package]]
 name = "deserr-internal"
-version = "0.1.4"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7131de1c27581bc376a22166c9f570be91b76cb096be2f6aecf224c27bf7c49a"
+checksum = "ff7d356099586b0415609c43aeee46f11c8ee66d4cbbbdf4f5da06d3b50d0752"
 dependencies = [
  "convert_case 0.5.0",
  "proc-macro2 1.0.49",
@@ -2503,7 +2503,6 @@ dependencies = [
  "rustls-pemfile",
  "segment",
  "serde",
- "serde-cs",
  "serde_json",
  "serde_urlencoded",
  "sha-1",
@@ -2568,6 +2567,7 @@ dependencies = [
  "proptest-derive",
  "roaring",
  "serde",
+ "serde-cs",
  "serde_json",
  "tar",
  "tempfile",
