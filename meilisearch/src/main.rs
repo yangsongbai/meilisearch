@@ -30,11 +30,15 @@ fn setup(opt: &Opt) -> anyhow::Result<()> {
     Ok(())
 }
 
-#[actix_web::main]
-async fn main() -> anyhow::Result<()> {
+fn main() -> anyhow::Result<()> {
     #[cfg(feature = "dhat-heap")]
     let _profiler = dhat::Profiler::new_heap();
 
+    main2()
+}
+
+#[actix_web::main]
+async fn main2() -> anyhow::Result<()> {
     let (opt, config_read_from) = Opt::try_build()?;
 
     setup(&opt)?;
