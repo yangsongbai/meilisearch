@@ -12,6 +12,11 @@ use meilisearch::{analytics, create_app, prototype_name, setup_meilisearch, Opt}
 use meilisearch_auth::{generate_master_key, AuthController, MASTER_KEY_MIN_SIZE};
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
+#[cfg(feature = "dhat-heap")]
+#[global_allocator]
+static ALLOC: dhat::Alloc = dhat::Alloc;
+
+#[cfg(not(feature = "dhat-heap"))]
 #[global_allocator]
 static ALLOC: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
@@ -27,6 +32,9 @@ fn setup(opt: &Opt) -> anyhow::Result<()> {
 
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
+    #[cfg(feature = "dhat-heap")]
+    let _profiler = dhat::Profiler::new_heap();
+
     let (opt, config_read_from) = Opt::try_build()?;
 
     setup(&opt)?;

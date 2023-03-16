@@ -15,17 +15,20 @@ default-run = "meilisearch"
 [dependencies]
 actix-cors = "0.6.3"
 actix-http = { version = "3.2.2", default-features = false, features = ["compress-brotli", "compress-gzip", "rustls"] }
+actix-utils = "3.0.1"
 actix-web = { version = "4.2.1", default-features = false, features = ["macros", "compress-brotli", "compress-gzip", "cookies", "rustls"] }
 actix-web-static-files = { git = "https://github.com/kilork/actix-web-static-files.git", rev = "2d3b6160", optional = true }
 anyhow = { version = "1.0.65", features = ["backtrace"] }
 async-stream = "0.3.3"
 async-trait = "0.1.57"
+atty = "0.2.14"
 bstr = "1.0.1"
 byte-unit = { version = "4.0.14", default-features = false, features = ["std", "serde"] }
 bytes = "1.2.1"
 clap = { version = "4.0.9", features = ["derive", "env"] }
 crossbeam-channel = "0.5.6"
 deserr = "0.5.0"
+dhat = { version = "0.3.2", optional = true }
 dump = { path = "../dump" }
 either = "1.8.0"
 env_logger = "0.9.1"
@@ -62,6 +65,7 @@ rustls-pemfile = "1.0.1"
 segment = { version = "0.2.1", optional = true }
 serde = { version = "1.0.145", features = ["derive"] }
 serde_json = { version = "1.0.85", features = ["preserve_order"] }
+serde_urlencoded = "0.7.1"
 sha2 = "0.10.6"
 siphasher = "0.3.10"
 slice-group-by = "0.3.0"
@@ -69,6 +73,7 @@ static-files = { version = "0.2.3", optional = true }
 sysinfo = "0.26.4"
 tar = "0.4.38"
 tempfile = "3.3.0"
+termcolor = "1.1.3"
 thiserror = "1.0.37"
 time = { version = "0.3.15", features = ["serde-well-known", "formatting", "parsing", "macros"] }
 tokio = { version = "1.24.2", features = ["full"] }
@@ -77,10 +82,6 @@ toml = "0.5.9"
 uuid = { version = "1.1.2", features = ["serde", "v4"] }
 walkdir = "2.3.2"
 yaup = "0.2.0"
-serde_urlencoded = "0.7.1"
-actix-utils = "3.0.1"
-atty = "0.2.14"
-termcolor = "1.1.3"
 
 [dev-dependencies]
 actix-rt = "2.7.0"
@@ -107,6 +108,7 @@ zip = { version = "0.6.2", optional = true }
 
 [features]
 default = ["analytics", "meilisearch-types/default", "mini-dashboard"]
+dhat-heap = ["dhat"]
 analytics = ["segment"]
 mini-dashboard = ["actix-web-static-files", "static-files", "anyhow", "cargo_toml", "hex", "reqwest", "sha-1", "tempfile", "zip"]
 chinese = ["meilisearch-types/chinese"]
