@@ -42,6 +42,7 @@ pub fn create_sorter(
     if let Some(nb_chunks) = max_nb_chunks {
         builder.max_nb_chunks(nb_chunks);
     }
+    log::info!("We created a sorter with a max memory of {:?}", max_memory);
     if let Some(memory) = max_memory {
         builder.dump_threshold(memory);
         builder.allow_realloc(false);
