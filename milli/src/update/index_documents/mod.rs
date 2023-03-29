@@ -248,19 +248,21 @@ where
         // up to date field map.
         self.index.put_fields_ids_map(self.wtxn, &fields_ids_map)?;
 
+        log::info!("Executing the transform method with config {:?}", self.indexer_config);
+
         let backup_pool;
         let pool = match self.indexer_config.thread_pool {
             Some(ref pool) => pool,
             #[cfg(not(test))]
             None => {
-                // We initialize a bakcup pool with the default
+                // We initialize a backup pool with the default
                 // settings if none have already been set.
                 backup_pool = rayon::ThreadPoolBuilder::new().build()?;
                 &backup_pool
             }
             #[cfg(test)]
             None => {
-                // We initialize a bakcup pool with the default
+                // We initialize a backup pool with the default
                 // settings if none have already been set.
                 backup_pool = rayon::ThreadPoolBuilder::new().num_threads(1).build()?;
                 &backup_pool
