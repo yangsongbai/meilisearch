@@ -212,6 +212,7 @@ pub struct SearchResult {
     pub processing_time_ms: u128,
     #[serde(flatten)]
     pub hits_info: HitsInfo,
+    pub scores: Vec<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub facet_distribution: Option<BTreeMap<String, BTreeMap<String, u64>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -320,7 +321,8 @@ pub fn perform_search(
         search.sort_criteria(sort);
     }
 
-    let milli::SearchResult { documents_ids, matching_words, candidates, .. } = search.execute()?;
+    let milli::SearchResult { documents_ids, matching_words, candidates, document_scores, .. } =
+        search.execute()?;
 
     let fields_ids_map = index.fields_ids_map(&rtxn).unwrap();
 
@@ -463,6 +465,7 @@ pub fn perform_search(
     });
 
     let result = SearchResult {
+        scores: document_scores,
         hits: documents,
         hits_info,
         query: query.q.clone().unwrap_or_default(),

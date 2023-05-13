@@ -102,7 +102,7 @@ impl<'a> Search<'a> {
 
     pub fn execute(&self) -> Result<SearchResult> {
         let mut ctx = SearchContext::new(self.index, self.rtxn);
-        let PartialSearchResult { located_query_terms, candidates, documents_ids } =
+        let PartialSearchResult { located_query_terms, candidates, documents_ids, document_scores } =
             execute_search(
                 &mut ctx,
                 &self.query,
@@ -124,7 +124,7 @@ impl<'a> Search<'a> {
             None => MatchingWords::default(),
         };
 
-        Ok(SearchResult { matching_words, candidates, documents_ids })
+        Ok(SearchResult { matching_words, candidates, document_scores, documents_ids })
     }
 }
 
@@ -162,6 +162,8 @@ pub struct SearchResult {
     pub candidates: RoaringBitmap,
     // TODO those documents ids should be associated with their criteria scores.
     pub documents_ids: Vec<DocumentId>,
+    // FIXME: avoid having a second vector
+    pub document_scores: Vec<f64>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

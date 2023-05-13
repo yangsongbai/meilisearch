@@ -425,7 +425,8 @@ pub fn execute_search(
         )?
     };
 
-    let BucketSortOutput { docids, mut all_candidates } = bucket_sort_output;
+    let BucketSortOutput { docids, scores, mut all_candidates } = bucket_sort_output;
+    assert!(!scores.is_empty());
 
     // The candidates is the universe unless the exhaustive number of hits
     // is requested and a distinct attribute is set.
@@ -439,6 +440,7 @@ pub fn execute_search(
 
     Ok(PartialSearchResult {
         candidates: all_candidates,
+        document_scores: scores,
         documents_ids: docids,
         located_query_terms,
     })
@@ -490,4 +492,5 @@ pub struct PartialSearchResult {
     pub located_query_terms: Option<Vec<LocatedQueryTerm>>,
     pub candidates: RoaringBitmap,
     pub documents_ids: Vec<DocumentId>,
+    pub document_scores: Vec<f64>,
 }
