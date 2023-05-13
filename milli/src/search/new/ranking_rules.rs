@@ -14,7 +14,7 @@ impl RankingRuleQueryTrait for PlaceholderQuery {}
 impl RankingRuleQueryTrait for QueryGraph {}
 
 pub type BoxRankingRule<'ctx, Query> = Box<dyn RankingRule<'ctx, Query> + 'ctx>;
-
+pub type TotalBucketCount = u64;
 /// A trait that must be implemented by all ranking rules.
 ///
 /// It is generic over `'ctx`, the lifetime of the search context
@@ -33,7 +33,7 @@ pub trait RankingRule<'ctx, Query: RankingRuleQueryTrait> {
         logger: &mut dyn SearchLogger<Query>,
         universe: &RoaringBitmap,
         query: &Query,
-    ) -> Result<()>;
+    ) -> Result<TotalBucketCount>;
 
     /// Return the next bucket of this ranking rule.
     ///
@@ -66,4 +66,6 @@ pub struct RankingRuleOutput<Q> {
     pub query: Q,
     /// The allowed candidates for the child ranking rule
     pub candidates: RoaringBitmap,
+    /// The number of remaining buckets including the bucket in which the candidates fall in
+    pub remaining_buckets: u64,
 }
