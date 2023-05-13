@@ -6,7 +6,9 @@ use heed::{RoPrefix, RoTxn};
 use roaring::RoaringBitmap;
 use rstar::RTree;
 
-use super::ranking_rules::{RankingRule, RankingRuleOutput, RankingRuleQueryTrait};
+use super::ranking_rules::{
+    RankingRule, RankingRuleOutput, RankingRuleQueryTrait, TotalBucketCount,
+};
 use crate::heed_codec::facet::{FieldDocIdFacetCodec, OrderedF64Codec};
 use crate::{
     distance_between_two_points, lat_lng_to_xyz, GeoPoint, Index, Result, SearchContext,
@@ -195,14 +197,14 @@ impl<'ctx, Q: RankingRuleQueryTrait> RankingRule<'ctx, Q> for GeoSort<Q> {
         _logger: &mut dyn SearchLogger<Q>,
         universe: &RoaringBitmap,
         query: &Q,
-    ) -> Result<()> {
+    ) -> Result<TotalBucketCount> {
         assert!(self.query.is_none());
 
         self.query = Some(query.clone());
         self.geo_candidates &= universe;
 
         if self.geo_candidates.is_empty() {
-            return Ok(());
+            return Ok(1);
         }
 
         let fid_map = ctx.index.fields_ids_map(ctx.txn)?;
@@ -210,7 +212,7 @@ impl<'ctx, Q: RankingRuleQueryTrait> RankingRule<'ctx, Q> for GeoSort<Q> {
         let lng = fid_map.id("_geo.lng").expect("geo candidates but no fid for lng");
         self.field_ids = Some([lat, lng]);
         self.fill_buffer(ctx)?;
-        Ok(())
+        Ok(1)
     }
 
     #[allow(clippy::only_used_in_recursion)]
@@ -225,7 +227,11 @@ impl<'ctx, Q: RankingRuleQueryTrait> RankingRule<'ctx, Q> for GeoSort<Q> {
         self.geo_candidates &= universe;
 
         if self.geo_candidates.is_empty() {
-            return Ok(Some(RankingRuleOutput { query, candidates: universe.clone() }));
+            return Ok(Some(RankingRuleOutput {
+                query,
+                candidates: universe.clone(),
+                remaining_buckets: 1,
+            }));
         }
 
         let ascending = self.ascending;
@@ -241,6 +247,7 @@ impl<'ctx, Q: RankingRuleQueryTrait> RankingRule<'ctx, Q> for GeoSort<Q> {
                 return Ok(Some(RankingRuleOutput {
                     query,
                     candidates: RoaringBitmap::from_iter([id]),
+                    remaining_buckets: 1,
                 }));
             }
         }

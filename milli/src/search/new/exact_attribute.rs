@@ -32,9 +32,9 @@ impl<'ctx> RankingRule<'ctx, QueryGraph> for ExactAttribute {
         _logger: &mut dyn SearchLogger<QueryGraph>,
         universe: &roaring::RoaringBitmap,
         query: &QueryGraph,
-    ) -> Result<()> {
+    ) -> Result<u64> {
         self.state = State::start_iteration(ctx, universe, query)?;
-        Ok(())
+        Ok(3)
     }
 
     fn next_bucket(
@@ -244,7 +244,11 @@ impl State {
                 candidates &= universe;
                 (
                     State::AttributeStarts(query_graph.clone(), candidates_per_attribute),
-                    Some(RankingRuleOutput { query: query_graph, candidates }),
+                    Some(RankingRuleOutput {
+                        query: query_graph,
+                        candidates,
+                        remaining_buckets: 3,
+                    }),
                 )
             }
             State::AttributeStarts(query_graph, candidates_per_attribute) => {
@@ -257,12 +261,20 @@ impl State {
                 candidates &= universe;
                 (
                     State::Empty(query_graph.clone()),
-                    Some(RankingRuleOutput { query: query_graph, candidates }),
+                    Some(RankingRuleOutput {
+                        query: query_graph,
+                        candidates,
+                        remaining_buckets: 2,
+                    }),
                 )
             }
             State::Empty(query_graph) => (
                 State::Empty(query_graph.clone()),
-                Some(RankingRuleOutput { query: query_graph, candidates: universe.clone() }),
+                Some(RankingRuleOutput {
+                    query: query_graph,
+                    candidates: universe.clone(),
+                    remaining_buckets: 1,
+                }),
             ),
         };
         (state, output)

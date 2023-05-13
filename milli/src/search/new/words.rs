@@ -2,6 +2,7 @@ use roaring::RoaringBitmap;
 
 use super::logger::SearchLogger;
 use super::query_graph::QueryNode;
+use super::ranking_rules::TotalBucketCount;
 use super::resolve_query_graph::compute_query_graph_docids;
 use super::small_bitmap::SmallBitmap;
 use super::{QueryGraph, RankingRule, RankingRuleOutput, SearchContext};
@@ -34,7 +35,7 @@ impl<'ctx> RankingRule<'ctx, QueryGraph> for Words {
         _logger: &mut dyn SearchLogger<QueryGraph>,
         _universe: &RoaringBitmap,
         parent_query_graph: &QueryGraph,
-    ) -> Result<()> {
+    ) -> Result<TotalBucketCount> {
         self.exhausted = false;
         self.query_graph = Some(parent_query_graph.clone());
         self.nodes_to_remove = match self.terms_matching_strategy {
@@ -47,7 +48,7 @@ impl<'ctx> RankingRule<'ctx, QueryGraph> for Words {
                 vec![]
             }
         };
-        Ok(())
+        Ok(self.nodes_to_remove.len() as u64 + 1)
     }
 
     fn next_bucket(
@@ -72,7 +73,11 @@ impl<'ctx> RankingRule<'ctx, QueryGraph> for Words {
             let nodes_to_remove = self.nodes_to_remove.pop().unwrap();
             query_graph.remove_nodes_keep_edges(&nodes_to_remove.iter().collect::<Vec<_>>());
         }
-        Ok(Some(RankingRuleOutput { query: child_query_graph, candidates: this_bucket }))
+        Ok(Some(RankingRuleOutput {
+            query: child_query_graph,
+            candidates: this_bucket,
+            remaining_buckets: self.nodes_to_remove.len() as u64 + 2,
+        }))
     }
 
     fn end_iteration(

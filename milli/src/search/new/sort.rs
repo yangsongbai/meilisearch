@@ -1,6 +1,7 @@
 use roaring::RoaringBitmap;
 
 use super::logger::SearchLogger;
+use super::ranking_rules::TotalBucketCount;
 use super::{RankingRule, RankingRuleOutput, RankingRuleQueryTrait, SearchContext};
 use crate::heed_codec::facet::FacetGroupKeyCodec;
 use crate::heed_codec::ByteSliceRefCodec;
@@ -75,7 +76,7 @@ impl<'ctx, Query: RankingRuleQueryTrait> RankingRule<'ctx, Query> for Sort<'ctx,
         _logger: &mut dyn SearchLogger<Query>,
         parent_candidates: &RoaringBitmap,
         parent_query: &Query,
-    ) -> Result<()> {
+    ) -> Result<TotalBucketCount> {
         let iter: RankingRuleOutputIterWrapper<Query> = match self.field_id {
             Some(field_id) => {
                 let number_db = ctx
@@ -123,7 +124,11 @@ impl<'ctx, Query: RankingRuleQueryTrait> RankingRule<'ctx, Query> for Sort<'ctx,
                 RankingRuleOutputIterWrapper::new(Box::new(number_iter.chain(string_iter).map(
                     move |r| {
                         let (docids, _) = r?;
-                        Ok(RankingRuleOutput { query: query_graph.clone(), candidates: docids })
+                        Ok(RankingRuleOutput {
+                            query: query_graph.clone(),
+                            candidates: docids,
+                            remaining_buckets: 1,
+                        })
                     },
                 )))
             }
@@ -131,7 +136,7 @@ impl<'ctx, Query: RankingRuleQueryTrait> RankingRule<'ctx, Query> for Sort<'ctx,
         };
         self.original_query = Some(parent_query.clone());
         self.iter = Some(iter);
-        Ok(())
+        Ok(1)
     }
 
     fn next_bucket(
@@ -150,7 +155,11 @@ impl<'ctx, Query: RankingRuleQueryTrait> RankingRule<'ctx, Query> for Sort<'ctx,
             Ok(Some(bucket))
         } else {
             let query = self.original_query.as_ref().unwrap().clone();
-            Ok(Some(RankingRuleOutput { query, candidates: universe.clone() }))
+            Ok(Some(RankingRuleOutput {
+                query,
+                candidates: universe.clone(),
+                remaining_buckets: 1,
+            }))
         }
     }
 
