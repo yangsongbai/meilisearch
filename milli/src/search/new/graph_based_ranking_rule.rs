@@ -48,6 +48,7 @@ use super::ranking_rule_graph::{
     ConditionDocIdsCache, DeadEndsCache, ExactnessGraph, FidGraph, PositionGraph, ProximityGraph,
     RankingRuleGraph, RankingRuleGraphTrait, TypoGraph,
 };
+use super::ranking_rules::TotalBucketCount;
 use super::small_bitmap::SmallBitmap;
 use super::{QueryGraph, RankingRule, RankingRuleOutput, SearchContext};
 use crate::search::new::query_term::LocatedQueryTermSubset;
@@ -124,7 +125,7 @@ impl<'ctx, G: RankingRuleGraphTrait> RankingRule<'ctx, QueryGraph> for GraphBase
         _logger: &mut dyn SearchLogger<QueryGraph>,
         _universe: &RoaringBitmap,
         query_graph: &QueryGraph,
-    ) -> Result<()> {
+    ) -> Result<TotalBucketCount> {
         let removal_cost = if let Some(terms_matching_strategy) = self.terms_matching_strategy {
             match terms_matching_strategy {
                 TermsMatchingStrategy::Last => {
@@ -164,9 +165,11 @@ impl<'ctx, G: RankingRuleGraphTrait> RankingRule<'ctx, QueryGraph> for GraphBase
             cur_cost: 0,
         };
 
+        let total_buckets = state.all_costs.get(state.graph.query_graph.root_node).len() as u64 + 1;
+
         self.state = Some(state);
 
-        Ok(())
+        Ok(total_buckets)
     }
 
     fn next_bucket(
@@ -182,16 +185,17 @@ impl<'ctx, G: RankingRuleGraphTrait> RankingRule<'ctx, QueryGraph> for GraphBase
         // should never happen
         let mut state = self.state.take().unwrap();
 
+        let all_costs = state.all_costs.get(state.graph.query_graph.root_node);
         // Retrieve the cost of the paths to compute
-        let Some(&cost) = state
-            .all_costs
-            .get(state.graph.query_graph.root_node)
+        let Some((current_bucket, &cost)) = all_costs
             .iter()
-            .find(|c| **c >= state.cur_cost) else {
+            .enumerate()
+            .find(|(_, c)| **c >= state.cur_cost) else {
                 self.state = None;
                 return Ok(None);
         };
         state.cur_cost = cost + 1;
+        let remaining_buckets = (all_costs.len() + 1 - current_bucket) as u64;
 
         let mut bucket = RoaringBitmap::new();
 
@@ -319,7 +323,11 @@ impl<'ctx, G: RankingRuleGraphTrait> RankingRule<'ctx, QueryGraph> for GraphBase
 
         self.state = Some(state);
 
-        Ok(Some(RankingRuleOutput { query: next_query_graph, candidates: bucket }))
+        Ok(Some(RankingRuleOutput {
+            query: next_query_graph,
+            candidates: bucket,
+            remaining_buckets,
+        }))
     }
 
     fn end_iteration(
