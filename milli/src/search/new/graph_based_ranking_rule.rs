@@ -113,6 +113,8 @@ pub struct GraphBasedRankingRuleState<G: RankingRuleGraphTrait> {
     all_costs: MappedInterner<QueryNode, Vec<u64>>,
     /// An index in the first element of `all_distances`, giving the cost of the next bucket
     cur_cost: u64,
+    /// The total number of buckets including empty buckets, computed from the maximum cost
+    total_buckets: u64,
 }
 
 impl<'ctx, G: RankingRuleGraphTrait> RankingRule<'ctx, QueryGraph> for GraphBasedRankingRule<G> {
@@ -157,15 +159,17 @@ impl<'ctx, G: RankingRuleGraphTrait> RankingRule<'ctx, QueryGraph> for GraphBase
         // Then pre-compute the cost of all paths from each node to the end node
         let all_costs = graph.find_all_costs_to_end();
 
+        let total_buckets =
+            all_costs.get(graph.query_graph.root_node).iter().copied().max().unwrap_or(0) + 1;
+
         let state = GraphBasedRankingRuleState {
             graph,
             conditions_cache: condition_docids_cache,
             dead_ends_cache,
             all_costs,
             cur_cost: 0,
+            total_buckets,
         };
-
-        let total_buckets = state.all_costs.get(state.graph.query_graph.root_node).len() as u64 + 1;
 
         self.state = Some(state);
 
@@ -187,15 +191,13 @@ impl<'ctx, G: RankingRuleGraphTrait> RankingRule<'ctx, QueryGraph> for GraphBase
 
         let all_costs = state.all_costs.get(state.graph.query_graph.root_node);
         // Retrieve the cost of the paths to compute
-        let Some((current_bucket, &cost)) = all_costs
+        let Some(&cost) = all_costs
             .iter()
-            .enumerate()
-            .find(|(_, c)| **c >= state.cur_cost) else {
+            .find(|c| **c >= state.cur_cost) else {
                 self.state = None;
                 return Ok(None);
         };
         state.cur_cost = cost + 1;
-        let remaining_buckets = (all_costs.len() + 1 - current_bucket) as u64;
 
         let mut bucket = RoaringBitmap::new();
 
@@ -205,7 +207,10 @@ impl<'ctx, G: RankingRuleGraphTrait> RankingRule<'ctx, QueryGraph> for GraphBase
             dead_ends_cache,
             all_costs,
             cur_cost: _,
+            total_buckets,
         } = &mut state;
+
+        let remaining_buckets = *total_buckets - cost;
 
         let mut universe = universe.clone();
 
